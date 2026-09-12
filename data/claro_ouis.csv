@@ -205,3 +205,16 @@ B0:5B:99,Sagemcom,
 F4:2D:06,ZTE,
 18:6A:81,Sagemcom,
 70:4F:57,TP-Link,
+
+# --- Observed-on-pattern caveat (data quality) -------------------------------
+# These rows are here because a device on the block was seen broadcasting a
+# default-style CLARO_ SSID - NOT because the block is confirmed Claro-issued CPE.
+# They are CONSUMER / 3rd-party brands, most likely renamed routers or added APs
+# cloning the SSID. A non-Claro device does not run the MAC-derived default-key
+# scheme, so its key is NOT derivable - these are false positives for the scheme
+# (~0.3% of the surveyed default gateways). Kept for vendor labelling; treat as
+# UNVERIFIED and not part of the derivable population.
+#   00:90:4C  Epigram/Broadcom  - Broadcom reference-design OUI; white-label APs/repeaters
+#   78:32:1B  D-Link            - consumer brand
+#   TP-Link (mostly consumer)   - 28:87:BA 50:3D:D1 60:32:B1 D8:47:32 EC:75:0C A8:6E:84 70:4F:57
+# Ambiguous (left unflagged - can be ISP CPE or consumer): Intelbras, SEI Robotics, Tellescom.

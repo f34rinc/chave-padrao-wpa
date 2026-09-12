@@ -75,6 +75,14 @@ high-volume makers exhaust blocks and register more, and acquisitions carry lega
 blocks (Vantiva is the renamed Technicolor; CommScope acquired ARRIS). So 177
 blocks map to only 16 actual companies.
 
+> **Observed-on-pattern, not confirmed-issued.** These are OUIs *seen on a `CLARO_`
+> SSID* — a superset of the blocks Claro actually issues. About **0.3%** of the
+> default gateways sit on consumer-brand blocks (TP-Link, D-Link, a Broadcom
+> reference OUI) that are most likely **renamed routers or added APs cloning the
+> SSID**: a non-Claro device doesn't run the MAC-derived key scheme, so it isn't
+> derivable and slightly over-counts the figures above. They're kept for
+> completeness and flagged in [`data/claro_ouis.csv`](data/claro_ouis.csv).
+
 | Vendor | Blocks |
 |---|--:|
 | Sagemcom | 57 |
