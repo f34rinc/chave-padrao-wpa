@@ -199,3 +199,9 @@ A8:6E:84,TP-Link,
 # 2026-09-11 second-collector run (continued) - 2 new OUIs, IEEE-attributed
 68:77:DA,ZTE,
 E4:66:AB,ZTE,
+
+# 2026-09-12 new-area walk (different district) - 4 new OUIs, IEEE-attributed
+B0:5B:99,Sagemcom,
+F4:2D:06,ZTE,
+18:6A:81,Sagemcom,
+70:4F:57,TP-Link,
