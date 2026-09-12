@@ -178,8 +178,9 @@ que o hardware split seja raro. Dois efeitos o escondem: gateways split que fora
 **renomeados** saem inteiramente da população de SSID padrão (não dá para derivar
 uma rede renomeada), e uma unidade split em qualquer bloco de OUI da CommScope que
 não catalogamos aparece como single-OUI para uma varredura passiva. Buscar
-diretamente nessas mesmas capturas pelo OUI de roteador da ARRIS revelou **três**
-unidades ARRIS distintas — todas com SSID renomeado. Então trate single-OUI como
+diretamente nessas mesmas capturas pelo OUI de roteador da ARRIS revela múltiplas
+unidades ARRIS distintas — quase todas renomeadas, agora incluindo uma ainda no
+SSID **padrão** (veja [STATS.md](STATS.md) para a contagem atual). Então trate single-OUI como
 a norma **entre os fabricantes confirmados como bloco único**, e trate
 ARRIS/CommScope como uma classe split real e não rara que uma varredura só de
 beacon **subconta** sistematicamente.
@@ -336,9 +337,9 @@ após deduplicação) confirma que o padrão é **difundido e atual**, não aned
   é evidência de que o hardware split seja raro, e não afirmamos que seja. O split
   não pode ser visto apenas de um beacon, e unidades split que foram **renomeadas**
   saem inteiramente da população de SSID padrão. Buscar nessas mesmas capturas
-  diretamente pelo OUI de roteador da ARRIS (`C8:52:61`) encontrou **três gateways
-  ARRIS distintos — cada um com SSID renomeado** (duas unidades de vizinhos, não
-  apenas a inspecionada fisicamente). Então a leitura honesta é: "uma tentativa a
+  diretamente pelo OUI de roteador da ARRIS (`C8:52:61`) encontra **múltiplos gateways
+  ARRIS distintos — quase todos renomeados, agora incluindo um no SSID padrão** (veja
+  [STATS.md](STATS.md) para a contagem atual). Então a leitura honesta é: "uma tentativa a
   partir do beacon" é o caso comum **para a população de SSID padrão dominada por
   single-OUI** que a ferramenta mira — enquanto ARRIS/CommScope é uma classe split
   real que uma varredura passiva **subconta sistematicamente**, não uma raridade.

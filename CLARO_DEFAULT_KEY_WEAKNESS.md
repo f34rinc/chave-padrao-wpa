@@ -172,8 +172,9 @@ is **not** evidence that split hardware is rare. Two effects hide it: split
 gateways that were **renamed** leave the default-SSID population entirely (you
 can't derive a renamed network), and a split unit on any CommScope OUI block we
 haven't catalogued reads as single-OUI to a passive scan. Directly scanning the
-same captures for the ARRIS router OUI turned up **three** distinct ARRIS
-units — all on renamed SSIDs. So treat single-OUI as the norm **among the vendors
+same captures for the ARRIS router OUI turns up multiple distinct ARRIS
+units — nearly all renamed, now including one still on its **default** SSID
+(see [STATS.md](STATS.md) for the live count). So treat single-OUI as the norm **among the vendors
 confirmed single-block**, and treat ARRIS/CommScope as a real, non-rare split
 class that a beacon-only scan systematically under-counts.
 
@@ -323,8 +324,9 @@ the pattern is **pervasive and current**, not anecdotal:
   that split hardware is rare, and we do not claim it is. Split cannot be seen from
   a beacon alone, and split units that were **renamed** leave the default-SSID
   population entirely. Scanning the very same captures directly for the ARRIS
-  router OUI (`C8:52:61`) found **three distinct ARRIS gateways — every one on a
-  renamed SSID** (two neighbours' units, not just the physically-inspected one).
+  router OUI (`C8:52:61`) finds **multiple distinct ARRIS gateways — nearly all
+  renamed, now including one on a default SSID** (see [STATS.md](STATS.md) for the
+  current count).
   So the honest reading is: "one guess off the beacon" is the common case **for
   the default-SSID, single-OUI-dominated population** the tool targets — while
   ARRIS/CommScope is a real split class that a passive scan **systematically

@@ -335,7 +335,7 @@
           <p style="color:var(--muted); margin:0">Same OUI <b style="color:var(--secret)">A0:B1:C2</b>. So octet 3 = <b style="color:var(--secret)">C2</b> — the password's leading byte, already public.</p>
         </div>
       </div>
-      <div class="callout"><b>The exception — split-OUI gateways.</b> Some units — systematically, the ARRIS/CommScope models — are really two devices in one shell: the DOCSIS modem and the Wi-Fi router draw MACs from <em>different</em> OUI blocks — e.g. radio <code style="color:var(--secret)">C8:52:61</code> while the modem that keys the password is <code style="color:var(--accent)">A8:70:5D</code>. There the BSSID's octet 3 (<code>61</code>) is <b>not</b> the leading byte (<code>5D</code>), so it can't be read off the beacon — that's what the 256-guess fallback is for, and it resolves against a handshake in <b>under a second</b>. This isn't rare, it's <b>under-counted</b>: split can't be told from single by a beacon alone, and split owners tend to rename — so passive scans miss it. Scanning a metro capture directly for the ARRIS OUI turned up three distinct ARRIS gateways, every one renamed.</div>
+      <div class="callout"><b>The exception — split-OUI gateways.</b> Some units — systematically, the ARRIS/CommScope models — are really two devices in one shell: the DOCSIS modem and the Wi-Fi router draw MACs from <em>different</em> OUI blocks — e.g. radio <code style="color:var(--secret)">C8:52:61</code> while the modem that keys the password is <code style="color:var(--accent)">A8:70:5D</code>. There the BSSID's octet 3 (<code>61</code>) is <b>not</b> the leading byte (<code>5D</code>), so it can't be read off the beacon — that's what the 256-guess fallback is for, and it resolves against a handshake in <b>under a second</b>. This isn't rare, it's <b>under-counted</b>: split can't be told from single by a beacon alone, and split owners tend to rename — so passive scans miss it. Scanning a metro capture directly for the ARRIS OUI turns up multiple distinct ARRIS gateways — nearly all renamed, now including one on its default SSID (see STATS.md for the live count).</div>
     </div>
   </section>
 
@@ -391,7 +391,7 @@ key = <span class="u">C2</span> + <span class="k">3A9C2D</span>  →  <span clas
           <span class="tag">Affected</span>
           <div class="big">5 devices</div>
           <div class="yr">manufactured 2019–2021 · 5 vendors</div>
-          <p>Wi-Fi password = the device MAC's last 8 hex. On the single-OUI units the leading byte matched the BSSID's octet 3; ARRIS/CommScope is split-OUI (needs the 256-guess) — a real class, several seen in the wild, all renamed.</p>
+          <p>Wi-Fi password = the device MAC's last 8 hex. On the single-OUI units the leading byte matched the BSSID's octet 3; ARRIS/CommScope is split-OUI (needs the 256-guess) — a real class, multiple seen in the wild, nearly all renamed (one on a default SSID).</p>
         </div>
         <div class="ecard ok">
           <span class="tag">Not affected</span>

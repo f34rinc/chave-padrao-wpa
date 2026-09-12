@@ -260,7 +260,7 @@
           <p style="color:var(--muted); margin:0">Mesmo OUI <b style="color:var(--secret)">A0:B1:C2</b>. Então o octeto 3 = <b style="color:var(--secret)">C2</b> — o byte inicial da senha, já público.</p>
         </div>
       </div>
-      <div class="callout"><b>A exceção — gateways split-OUI.</b> Alguns aparelhos — de forma sistemática, os modelos ARRIS/CommScope — são na verdade dois aparelhos numa carcaça só: o modem DOCSIS e o roteador Wi-Fi tiram MACs de <em>blocos de OUI diferentes</em> — ex.: rádio <code style="color:var(--secret)">C8:52:61</code> enquanto o modem que gera a senha é <code style="color:var(--accent)">A8:70:5D</code>. Aí o octeto 3 do BSSID (<code>61</code>) <b>não</b> é o byte inicial (<code>5D</code>), e não dá para lê-lo no beacon — é para isso que existe o fallback de 256 tentativas, e ele resolve contra um handshake em <b>menos de um segundo</b>. Isso não é raro, é <b>subcontado</b>: não dá para distinguir split de single só pelo beacon, e donos de aparelhos split tendem a renomear — então varreduras passivas os perdem. Buscar diretamente o OUI da ARRIS numa captura de metrópole revelou três gateways ARRIS distintos, todos renomeados.</div>
+      <div class="callout"><b>A exceção — gateways split-OUI.</b> Alguns aparelhos — de forma sistemática, os modelos ARRIS/CommScope — são na verdade dois aparelhos numa carcaça só: o modem DOCSIS e o roteador Wi-Fi tiram MACs de <em>blocos de OUI diferentes</em> — ex.: rádio <code style="color:var(--secret)">C8:52:61</code> enquanto o modem que gera a senha é <code style="color:var(--accent)">A8:70:5D</code>. Aí o octeto 3 do BSSID (<code>61</code>) <b>não</b> é o byte inicial (<code>5D</code>), e não dá para lê-lo no beacon — é para isso que existe o fallback de 256 tentativas, e ele resolve contra um handshake em <b>menos de um segundo</b>. Isso não é raro, é <b>subcontado</b>: não dá para distinguir split de single só pelo beacon, e donos de aparelhos split tendem a renomear — então varreduras passivas os perdem. Buscar diretamente o OUI da ARRIS numa captura de metrópole revela múltiplos gateways ARRIS distintos — quase todos renomeados, agora incluindo um no SSID padrão (veja o STATS.md do projeto para a contagem atual).</div>
     </div>
   </section>
 
@@ -313,7 +313,7 @@ chave = <span class="u">C2</span> + <span class="k">3A9C2D</span>  →  <span cl
           <span class="tag">Afetado</span>
           <div class="big">5 aparelhos</div>
           <div class="yr">fabricados 2019–2021 · 5 fabricantes</div>
-          <p>Senha Wi-Fi = os 8 últimos hex do MAC do aparelho. Nos aparelhos single-OUI, o byte inicial coincidiu com o octeto 3 do BSSID; ARRIS/CommScope é split-OUI (exige as 256 tentativas) — uma classe real, vários vistos na rua, todos renomeados.</p>
+          <p>Senha Wi-Fi = os 8 últimos hex do MAC do aparelho. Nos aparelhos single-OUI, o byte inicial coincidiu com o octeto 3 do BSSID; ARRIS/CommScope é split-OUI (exige as 256 tentativas) — uma classe real, vários vistos na rua, quase todos renomeados (um no SSID padrão).</p>
         </div>
         <div class="ecard ok">
           <span class="tag">Não afetado</span>
