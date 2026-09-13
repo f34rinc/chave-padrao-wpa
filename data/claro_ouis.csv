@@ -206,6 +206,11 @@ F4:2D:06,ZTE,
 18:6A:81,Sagemcom,
 70:4F:57,TP-Link,
 
+# 2026-09-13 new-area walk - 3 new OUIs, IEEE-attributed (WNC = new vendor, Wistron NeWeb ODM/CPE)
+C4:0D:96,Huawei,
+E0:37:BF,WNC,
+30:E1:F1,Intelbras,
+
 # --- Observed-on-pattern caveat (data quality) -------------------------------
 # These rows are here because a device on the block was seen broadcasting a
 # default-style CLARO_ SSID - NOT because the block is confirmed Claro-issued CPE.
