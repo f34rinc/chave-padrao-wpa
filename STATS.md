@@ -6,13 +6,13 @@ the field. **Counts only** — this file contains no passwords, no BSSIDs, and n
 GPS coordinates. Generated with [`tools/analyze_wigle.py`](tools/analyze_wigle.py)
 from local WiGLE database exports (two collectors, one metro area).
 
-_Snapshot: 2026-09-12._
+_Snapshot: 2026-09-13._
 
 ## Dataset
 
 | Metric | Value |
 |---|--:|
-| Unique APs surveyed | 124,380 |
+| Unique APs surveyed | 128,197 |
 | OUI vendor blocks catalogued | 177 |
 | Distinct hardware vendors | 16 |
 
@@ -20,10 +20,10 @@ _Snapshot: 2026-09-12._
 
 | Metric | Count |
 |---|--:|
-| Default `CLARO_` BSSIDs | 3,316 |
-| &nbsp;&nbsp;— primary (physical gateways) | 2,413 |
-| &nbsp;&nbsp;— secondary / virtual (locally-administered) | 903 |
-| Renamed `CLARO_` (non-default SSID) | 321 |
+| Default `CLARO_` BSSIDs | 3,371 |
+| &nbsp;&nbsp;— primary (physical gateways) | 2,452 |
+| &nbsp;&nbsp;— secondary / virtual (locally-administered) | 919 |
+| Renamed `CLARO_` (non-default SSID) | 324 |
 
 ## Derivability — the core finding
 
@@ -32,14 +32,14 @@ broadcast beacon, with no handshake required.
 
 | Class | Count | Share |
 |---|--:|--:|
-| single-OUI — 1 guess off the beacon | 3,308 | 99.8% |
+| single-OUI — 1 guess off the beacon | 3,363 | 99.8% |
 | full-8 in SSID — key fully determined | 7 | 0.2% |
 | split-OUI — 256-guess vs a handshake | 1 | 0.0% |
-| **Derivable off the beacon** | **3,315** | **99.97%** |
+| **Derivable off the beacon** | **3,370** | **99.97%** |
 
-3,164 of the single-OUI gateways had a BSSID tail that differs from the SSID tail
+3,216 of the single-OUI gateways had a BSSID tail that differs from the SSID tail
 (the benign same-OUI "Compal case") — still a single guess, because the leading
-byte is BSSID octet 3. 903 were secondary/virtual radios: the locally-administered
+byte is BSSID octet 3. 919 were secondary/virtual radios: the locally-administered
 bit flips octet 1, never octet 3, so the leading byte still reads off the beacon.
 
 The lone exception is a single **split-OUI** unit seen on a default SSID —
@@ -56,11 +56,11 @@ directly off the beacon.
 
 | Variant | Count |
 |---|--:|
-| no-band | 1,011 |
-| banded 5 GHz | 875 |
-| banded 2.4 GHz | 705 |
-| mesh backhaul (`-5G-BH`) | 641 |
-| IoT (`-IoT`) | 84 |
+| no-band | 1,026 |
+| banded 5 GHz | 890 |
+| banded 2.4 GHz | 716 |
+| mesh backhaul (`-5G-BH`) | 654 |
+| IoT (`-IoT`) | 85 |
 
 ## Split-OUI hardware (ARRIS/CommScope)
 
