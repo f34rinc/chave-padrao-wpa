@@ -12,18 +12,18 @@ _Snapshot: 2026-09-13._
 
 | Metric | Value |
 |---|--:|
-| Unique APs surveyed | 148,634 |
-| OUI vendor blocks catalogued | 180 |
+| Unique APs surveyed | 155,624 |
+| OUI vendor blocks catalogued | 181 |
 | Distinct hardware vendors | 17 |
 
 ## Claro gateway population
 
 | Metric | Count |
 |---|--:|
-| Default `CLARO_` BSSIDs | 3,721 |
-| &nbsp;&nbsp;— primary (physical gateways) | 2,699 |
-| &nbsp;&nbsp;— secondary / virtual (locally-administered) | 1,022 |
-| Renamed `CLARO_` (non-default SSID) | 361 |
+| Default `CLARO_` BSSIDs | 3,820 |
+| &nbsp;&nbsp;— primary (physical gateways) | 2,760 |
+| &nbsp;&nbsp;— secondary / virtual (locally-administered) | 1,060 |
+| Renamed `CLARO_` (non-default SSID) | 372 |
 
 ## Derivability — the core finding
 
@@ -32,14 +32,14 @@ broadcast beacon, with no handshake required.
 
 | Class | Count | Share |
 |---|--:|--:|
-| single-OUI — 1 guess off the beacon | 3,712 | 99.8% |
+| single-OUI — 1 guess off the beacon | 3,811 | 99.8% |
 | full-8 in SSID — key fully determined | 8 | 0.2% |
 | split-OUI — 256-guess vs a handshake | 1 | 0.0% |
-| **Derivable off the beacon** | **3,720** | **99.97%** |
+| **Derivable off the beacon** | **3,819** | **99.97%** |
 
-3,557 of the single-OUI gateways had a BSSID tail that differs from the SSID tail
+3,652 of the single-OUI gateways had a BSSID tail that differs from the SSID tail
 (the benign same-OUI "Compal case") — still a single guess, because the leading
-byte is BSSID octet 3. 1,022 were secondary/virtual radios: the locally-administered
+byte is BSSID octet 3. 1,060 were secondary/virtual radios: the locally-administered
 bit flips octet 1, never octet 3, so the leading byte still reads off the beacon.
 
 The lone exception is a single **split-OUI** unit seen on a default SSID —
@@ -56,11 +56,11 @@ directly off the beacon.
 
 | Variant | Count |
 |---|--:|
-| no-band | 1,115 |
-| banded 5 GHz | 995 |
-| banded 2.4 GHz | 782 |
-| mesh backhaul (`-5G-BH`) | 730 |
-| IoT (`-IoT`) | 99 |
+| no-band | 1,141 |
+| banded 5 GHz | 1,020 |
+| banded 2.4 GHz | 805 |
+| mesh backhaul (`-5G-BH`) | 751 |
+| IoT (`-IoT`) | 103 |
 
 ## Split-OUI hardware (ARRIS/CommScope)
 
@@ -68,11 +68,11 @@ directly off the beacon.
 `CLARO_` SSID and 8 renamed. Because only that one block is catalogued as split,
 and split cannot be seen from a beacon, this is a floor, not a full count.
 
-## OUI vendor table (180 blocks)
+## OUI vendor table (181 blocks)
 
 One vendor holds many OUI blocks: each block covers ~16.7M addresses, so
 high-volume makers exhaust blocks and register more, and acquisitions carry legacy
-blocks (Vantiva is the renamed Technicolor; CommScope acquired ARRIS). So 180
+blocks (Vantiva is the renamed Technicolor; CommScope acquired ARRIS). So 181
 blocks map to only 17 actual companies.
 
 > **Observed-on-pattern, not confirmed-issued.** These are OUIs *seen on a `CLARO_`
@@ -95,11 +95,11 @@ blocks map to only 17 actual companies.
 | Intelbras | 5 |
 | Humax | 3 |
 | Compal | 2 |
+| Tellescom | 2 |
 | D-Link | 1 |
 | Hitron | 1 |
 | MitraStar | 1 |
 | SEI Robotics | 1 |
-| Tellescom | 1 |
 | Epigram/Broadcom | 1 |
 | WNC | 1 |
 
