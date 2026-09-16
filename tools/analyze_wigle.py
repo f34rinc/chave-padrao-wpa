@@ -2,7 +2,8 @@
 """
 analyze_wigle.py
 ------------------------------------------------------------
-Bulk-analyze a WiGLE wardriving export (.kml or WiGLE .csv) for affected Claro
+Bulk-analyze a WiGLE wardriving export (.kml, WiGLE .csv, or a SQLite "Database
+Backup" - extensionless is fine, detected by content) for affected Claro
 gateways, and summarize what it tells us about the default-key weakness.
 
 For every AP whose SSID is a factory-default Claro name (CLARO_<band><hex> and
@@ -24,6 +25,7 @@ any saved report are git-ignored for the same reason.
 
 Usage:
     python tools/analyze_wigle.py capture.kml [more.kml capture.csv ...]
+    python tools/analyze_wigle.py "WiGLE Database Backup"        # a SQLite backup, as-is
     python tools/analyze_wigle.py *.kml --out wigle_report.txt   # full report to a file
     python tools/analyze_wigle.py capture.kml --detail           # per-gateway rows on screen
     python tools/analyze_wigle.py capture.kml --rows             # only the new-OUI CSV rows
@@ -102,12 +104,42 @@ def parse_wigle_csv(path):
                    "bssid": bssid}
 
 
+def _is_sqlite(path):
+    """A WiGLE SQLite 'Database Backup' (frequently extensionless) - detect by the
+    file's magic header, so it works whether or not it has a .sqlite/.db name."""
+    try:
+        with open(path, "rb") as fh:
+            return fh.read(16) == b"SQLite format 3\x00"
+    except OSError:
+        return False
+
+
+def parse_sqlite(path):
+    """Yield {essid, bssid} for each Wi-Fi network in a WiGLE SQLite backup's
+    `network` table (bssid + ssid). Opened read-only; non-Wi-Fi rows skipped.
+    One row per network (already deduped by the app)."""
+    import sqlite3
+    import urllib.request
+    uri = "file:" + urllib.request.pathname2url(os.path.abspath(path)) + "?mode=ro"
+    con = sqlite3.connect(uri, uri=True)
+    try:
+        rows = con.execute("SELECT bssid, ssid FROM network WHERE type = 'W'").fetchall()
+    finally:
+        con.close()
+    for bssid, ssid in rows:
+        b = _norm_bssid(bssid)
+        if b:
+            yield {"essid": (ssid or "").strip(), "bssid": b}
+
+
 def parse_any(path):
     ext = os.path.splitext(path)[1].lower()
     if ext == ".kml":
         return parse_kml(path)
     if ext in (".csv", ".txt"):
         return parse_wigle_csv(path)
+    if ext in (".sqlite", ".db") or _is_sqlite(path):        # incl. extensionless backups
+        return parse_sqlite(path)
     # sniff: KML files start with an XML/kml tag
     with open(path, encoding="utf-8", errors="replace") as fh:
         head = fh.read(256).lower()
@@ -375,10 +407,11 @@ def mac_fmt(b):
 def main():
     ap = argparse.ArgumentParser(
         prog="analyze_wigle.py",
-        description="Summarize a WiGLE .kml/.csv export for affected Claro "
+        description="Summarize a WiGLE .kml/.csv/.sqlite export for affected Claro "
                     "gateways: single-vs-split-OUI derivability, OUI histogram, "
                     "and new-OUI CSV rows for data/claro_ouis.csv.")
-    ap.add_argument("paths", nargs="+", help="WiGLE .kml or .csv export(s); globs OK")
+    ap.add_argument("paths", nargs="+",
+                    help="WiGLE .kml / .csv / SQLite backup (extensionless OK); globs OK")
     ap.add_argument("--detail", action="store_true",
                     help="also list every gateway (BSSID+SSID) - LOCAL use only")
     ap.add_argument("--rows", action="store_true",

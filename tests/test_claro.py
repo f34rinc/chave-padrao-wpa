@@ -84,6 +84,34 @@ class TestCaptureParser(unittest.TestCase):
         self.assertEqual(nets[0]["bssid"], "aabb12ddee00")
 
 
+class TestSqliteParser(unittest.TestCase):
+    def _make_db(self, d):
+        import sqlite3
+        p = os.path.join(d, "WiGLE Database Backup")     # extensionless, like the real export
+        con = sqlite3.connect(p)
+        con.execute("CREATE TABLE network (bssid TEXT, ssid TEXT, type TEXT)")
+        con.executemany("INSERT INTO network VALUES (?,?,?)", [
+            ("AA:BB:CC:DD:EE:FF", "CLARO_5GDDEEFF", "W"),
+            ("11:22:33:44:55:66", "SomeWifi", "W"),
+            ("99:88:77:66:55:44", "MyHeadphones", "E"),   # bluetooth -> must be skipped
+        ])
+        con.commit()
+        con.close()
+        return p
+
+    def test_detects_and_parses_sqlite(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = self._make_db(d)
+            self.assertTrue(w._is_sqlite(p))              # detected by magic, no extension
+            txt = os.path.join(d, "x.csv")
+            with open(txt, "w") as fh:
+                fh.write("MAC,SSID\n")
+            self.assertFalse(w._is_sqlite(txt))           # a text file is not sqlite
+            got = {r["bssid"]: r["essid"] for r in w.parse_any(p)}   # routes via magic
+            self.assertEqual(got, {"aabbccddeeff": "CLARO_5GDDEEFF",
+                                   "112233445566": "SomeWifi"})       # BT row dropped, bssid normalized
+
+
 class TestAnalyzerLocalAdmin(unittest.TestCase):
     def test_is_local_admin(self):
         self.assertTrue(w.is_local_admin("aabb12ddee00"))    # 0xAA U/L bit set
