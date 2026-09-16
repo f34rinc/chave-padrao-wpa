@@ -214,6 +214,12 @@ E0:37:BF,WNC,
 # 2026-09-13 second-collector DB (evening) - 1 new OUI, IEEE-attributed
 44:89:6D,Tellescom,
 
+# 2026-09-15 Meier drive (north zone) - 4 new OUIs, IEEE-attributed (2 CPE + 2 TP-Link consumer)
+5C:76:95,Vantiva/Technicolor,
+B0:1F:F4,Sagemcom,
+78:20:51,TP-Link,
+5C:A6:E6,TP-Link,
+
 # --- Observed-on-pattern caveat (data quality) -------------------------------
 # These rows are here because a device on the block was seen broadcasting a
 # default-style CLARO_ SSID - NOT because the block is confirmed Claro-issued CPE.
@@ -224,5 +230,5 @@ E0:37:BF,WNC,
 # UNVERIFIED and not part of the derivable population.
 #   00:90:4C  Epigram/Broadcom  - Broadcom reference-design OUI; white-label APs/repeaters
 #   78:32:1B  D-Link            - consumer brand
-#   TP-Link (mostly consumer)   - 28:87:BA 50:3D:D1 60:32:B1 D8:47:32 EC:75:0C A8:6E:84 70:4F:57
+#   TP-Link (mostly consumer)   - 28:87:BA 50:3D:D1 60:32:B1 D8:47:32 EC:75:0C A8:6E:84 70:4F:57 78:20:51 5C:A6:E6
 # Ambiguous (left unflagged - can be ISP CPE or consumer): Intelbras, SEI Robotics, Tellescom.
