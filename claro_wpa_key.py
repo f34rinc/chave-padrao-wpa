@@ -96,6 +96,7 @@ OUI_VENDORS, SPLIT_OUIS = _load_ouis()
 # ---- color (ANSI, cross-platform, stdlib only) ------------------------------
 class _Palette:
     def __init__(self, on):
+        self.on = bool(on)            # a real ANSI terminal -> safe to clear-screen
         e = (lambda c: c) if on else (lambda c: "")
         self.reset  = e("\033[0m")
         self.bold   = e("\033[1m")
@@ -702,19 +703,45 @@ def _launched_standalone():
         return False
 
 
+def _clear():
+    """Wipe the terminal (screen + scrollback) for a fresh redraw. Only on a real
+    ANSI terminal; when piped it just prints the bar so output stays readable."""
+    if C.on:
+        sys.stdout.write("\033[2J\033[3J\033[H")   # clear screen + scrollback, cursor home
+        sys.stdout.flush()
+    else:
+        print(f"{C.dim}{BAR}{C.reset}")
+
+
+def _panel(run_mode, exe):
+    """The whole launcher view: title, drop hint, options, and the Mode/saving/fresh line."""
+    print(f"{C.dim}{BAR}{C.reset}")
+    print(f"  {C.bold}CLARO Default WPA Key{C.reset}")
+    print(f"{C.dim}{BAR}{C.reset}")
+    print("  Drag .hc22000 file(s) into this window (or paste path[s]), then Enter.")
+    print(f"  {C.dim}Blank line or Ctrl-C to quit.{C.reset}")
+    print()
+    _print_options(run_mode, exe)
+
+
+def _redraw(run_mode, exe, changed=None, note=None):
+    """Clear and redraw the whole panel so a changed setting shows against a fresh
+    view instead of stacking up. `changed` prints an obvious cue of what changed."""
+    _clear()
+    _panel(run_mode, exe)
+    if changed:
+        print(f"  {C.bold}{C.cyan}>> redrawn{C.reset}  {C.dim}({changed}){C.reset}")
+    if note:
+        print(note)
+
+
 def _interactive(exe, run_mode, intro=True):
     """Prompt loop: drop capture file(s) (or paste paths), switch flags inline,
     and keep the window open until a blank line / Ctrl-C. Shared by the
     no-argument launch and the keep-open pause after a drag-and-drop run."""
     global SAVE_CRACKS, FRESH_POTFILE
     if intro:
-        print(f"{C.dim}{BAR}{C.reset}")
-        print(f"  {C.bold}CLARO Default WPA Key{C.reset}")
-        print(f"{C.dim}{BAR}{C.reset}")
-        print("  Drag .hc22000 file(s) into this window (or paste path[s]), then Enter.")
-        print(f"  {C.dim}Blank line or Ctrl-C to quit.{C.reset}")
-        print()
-        _print_options(run_mode, exe)
+        _panel(run_mode, exe)
     while True:
         try:
             line = input("\n> ").strip()
@@ -729,38 +756,41 @@ def _interactive(exe, run_mode, intro=True):
         # treated as a path and reports "file not found".
         flags = [t for t in toks if t.startswith("-") or t.lower() in _WORD_COMMANDS]
         files = [t for t in toks if not t.startswith("-") and t.lower() not in _WORD_COMMANDS]
+        changes, notes = [], []      # collect so we can clear + redraw ONCE with a cue
         for f in flags:
             fl = _WORD_COMMANDS.get(f.lower(), f.lower())   # normalise bare words to flags
             if fl in ("-y", "--run"):
-                run_mode = "yes"
+                run_mode = "yes"; changes.append("mode -> auto-run")
             elif fl in ("-n", "--no-run"):
-                run_mode = "no"
+                run_mode = "no"; changes.append("mode -> no-run")
             elif fl in ("-d", "--derive"):
-                run_mode = "derive"
+                run_mode = "derive"; changes.append("mode -> derive")
             elif fl == "--ask":
-                run_mode = "ask"
+                run_mode = "ask"; changes.append("mode -> ask")
             elif fl == "--no-save":
-                SAVE_CRACKS = False
+                SAVE_CRACKS = False; changes.append("saving -> off")
             elif fl == "--save":
-                SAVE_CRACKS = True
+                SAVE_CRACKS = True; changes.append("saving -> on")
             elif fl == "--fresh":
                 if not FRESH_POTFILE:
                     FRESH_POTFILE = _make_fresh_potfile()
-                print(f"  {C.dim}fresh: hashcat potfile cache ignored "
-                      f"(runs re-attack; real potfile untouched){C.reset}")
+                changes.append("fresh -> on")
+                notes.append(f"  {C.dim}fresh: hashcat potfile cache ignored "
+                             f"(runs re-attack; real potfile untouched){C.reset}")
             elif fl == "--stale":
                 _drop_fresh_potfile()
-                print(f"  {C.dim}fresh off: hashcat may replay its potfile cache{C.reset}")
+                changes.append("fresh -> off")
+                notes.append(f"  {C.dim}fresh off: hashcat may replay its potfile cache{C.reset}")
             elif fl in ("-h", "--help"):
-                _print_options(run_mode, exe)
+                changes.append("help")            # the redraw already shows the options panel
             else:
-                print(f"  {C.yellow}unknown option '{f}'{C.reset} - try -y, -n, -d, "
-                      f"--no-save, --fresh, or -h")
+                notes.append(f"  {C.yellow}unknown option '{f}'{C.reset} - try -y, -n, -d, "
+                             f"--no-save, --fresh, or -h")
         for i, p in enumerate(files, 1):
             capture_mode(p, exe, run_mode, i, len(files))
         if flags and not files:
-            print(f"  {C.dim}Mode:{C.reset} {C.bold}{MODE_LABEL[run_mode]}{C.reset}   "
-                  f"{C.dim}*   saving: {'on' if SAVE_CRACKS else 'off'}{C.reset}")
+            _redraw(run_mode, exe, changed=", ".join(changes) if changes else None,
+                    note="\n".join(notes) if notes else None)
 
 
 def main():
