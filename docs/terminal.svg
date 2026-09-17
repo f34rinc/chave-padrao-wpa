@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="743" height="386" viewBox="0 0 743 386" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="13">
+<rect x="0" y="0" width="743" height="386" rx="10" fill="#1c2128" stroke="#30363d"/>
+<rect x="1" y="1" width="741" height="34" rx="9" fill="#161b22"/>
+<rect x="1" y="25" width="741" height="10" fill="#161b22"/>
+<line x1="0" y1="34" x2="743" y2="34" stroke="#30363d"/>
+<circle cx="18" cy="17" r="6" fill="#ff5f56"/>
+<circle cx="38" cy="17" r="6" fill="#ffbd2e"/>
+<circle cx="58" cy="17" r="6" fill="#27c93f"/>
+<text x="371" y="21" text-anchor="middle" fill="#768390" font-size="12">python claro_wpa_key.py</text>
+<text x="20" y="63" xml:space="preserve"><tspan fill="#768390">======================================================================</tspan></text>
+<text x="20" y="83" xml:space="preserve"><tspan fill="#c9d1d9">  </tspan><tspan fill="#e6edf3" font-weight="700">CLARO Default WPA Key</tspan></text>
+<text x="20" y="103" xml:space="preserve"><tspan fill="#768390">======================================================================</tspan></text>
+<text x="20" y="123" xml:space="preserve"><tspan fill="#c9d1d9">  Drag .hc22000 file(s) into this window (or paste path[s]), then Enter.</tspan></text>
+<text x="20" y="143" xml:space="preserve"><tspan fill="#c9d1d9">  </tspan><tspan fill="#768390">Blank line or Ctrl-C to quit.</tspan></text>
+<text x="20" y="163" xml:space="preserve"></text>
+<text x="20" y="183" xml:space="preserve"><tspan fill="#c9d1d9">  </tspan><tspan fill="#768390">Options - set at launch (e.g. python claro_wpa_key.py -d) or type one here:</tspan></text>
+<text x="20" y="203" xml:space="preserve"><tspan fill="#c9d1d9">    </tspan><tspan fill="#e3b341">-y / --run</tspan><tspan fill="#c9d1d9">      auto-run hashcat for every network</tspan></text>
+<text x="20" y="223" xml:space="preserve"><tspan fill="#c9d1d9">    </tspan><tspan fill="#e3b341">-n / --no-run</tspan><tspan fill="#c9d1d9">   just print the keys + commands (no hashcat)</tspan></text>
+<text x="20" y="243" xml:space="preserve"><tspan fill="#c9d1d9">    </tspan><tspan fill="#e3b341">-d / --derive</tspan><tspan fill="#c9d1d9">   no handshake - derive + save the likely key(s)</tspan></text>
+<text x="20" y="263" xml:space="preserve"><tspan fill="#c9d1d9">    </tspan><tspan fill="#e3b341">--no-save</tspan><tspan fill="#c9d1d9">       don't write recovered keys to claro_cracked.jsonl  (</tspan><tspan fill="#e3b341">--save</tspan><tspan fill="#c9d1d9"> re-enables)</tspan></text>
+<text x="20" y="283" xml:space="preserve"><tspan fill="#c9d1d9">    </tspan><tspan fill="#e3b341">--fresh</tspan><tspan fill="#c9d1d9">         ignore hashcat's potfile cache so runs re-attack  (</tspan><tspan fill="#e3b341">--stale</tspan><tspan fill="#c9d1d9"> re-enables)</tspan></text>
+<text x="20" y="303" xml:space="preserve"><tspan fill="#c9d1d9">    </tspan><tspan fill="#768390">(default)       show keys, then ask before running hashcat</tspan></text>
+<text x="20" y="323" xml:space="preserve"></text>
+<text x="20" y="343" xml:space="preserve"><tspan fill="#c9d1d9">  </tspan><tspan fill="#768390">Mode:</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#e6edf3" font-weight="700">ask before running hashcat</tspan><tspan fill="#c9d1d9">   </tspan><tspan fill="#768390">*</tspan><tspan fill="#c9d1d9">   </tspan><tspan fill="#768390">saving:</tspan><tspan fill="#c9d1d9"> on   </tspan><tspan fill="#768390">*</tspan><tspan fill="#c9d1d9">   </tspan><tspan fill="#768390">fresh:</tspan><tspan fill="#c9d1d9"> off   </tspan><tspan fill="#768390">*</tspan><tspan fill="#c9d1d9">   </tspan><tspan fill="#768390">hashcat:</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#57ab5a">found</tspan></text>
+<text x="20" y="363" xml:space="preserve"><tspan fill="#c9d1d9">&gt; █</tspan></text>
+</svg>

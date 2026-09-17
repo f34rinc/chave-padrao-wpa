@@ -127,6 +127,11 @@ password = ?H?H 3A9C2D      →  ?H = uppercase hex 0-9A-F  →  256 candidates
 
 ## Usage
 
+<p align="center">
+  <img src="docs/terminal.svg" width="743"
+       alt="The interactive launcher: title bar, a 'drag .hc22000 file(s) into this window or paste paths' hint, the option flags (-y/--run, -n/--no-run, -d/--derive, --no-save, --fresh), and a status line reading 'Mode: ask before running hashcat · saving: on · fresh: off · hashcat: found'.">
+</p>
+
 One cross-platform command — Windows, macOS, and Linux, no GUI:
 
 ```bash
