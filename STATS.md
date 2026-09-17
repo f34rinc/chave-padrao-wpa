@@ -6,13 +6,13 @@ the field. **Counts only** — this file contains no passwords, no BSSIDs, and n
 GPS coordinates. Generated with [`tools/analyze_wigle.py`](tools/analyze_wigle.py)
 from local WiGLE database exports (two collectors, one metro area).
 
-_Snapshot: 2026-09-13._
+_Snapshot: 2026-09-17._
 
 ## Dataset
 
 | Metric | Value |
 |---|--:|
-| Unique APs surveyed | 155,624 |
+| Unique APs surveyed | 122,433 |
 | OUI vendor blocks catalogued | 181 |
 | Distinct hardware vendors | 17 |
 
@@ -20,10 +20,10 @@ _Snapshot: 2026-09-13._
 
 | Metric | Count |
 |---|--:|
-| Default `CLARO_` BSSIDs | 3,820 |
-| &nbsp;&nbsp;— primary (physical gateways) | 2,760 |
-| &nbsp;&nbsp;— secondary / virtual (locally-administered) | 1,060 |
-| Renamed `CLARO_` (non-default SSID) | 372 |
+| Default `CLARO_` BSSIDs | 4,468 |
+| &nbsp;&nbsp;— primary (physical gateways) | 3,244 |
+| &nbsp;&nbsp;— secondary / virtual (locally-administered) | 1,224 |
+| Renamed `CLARO_` (non-default SSID) | 449 |
 
 ## Derivability — the core finding
 
@@ -32,14 +32,14 @@ broadcast beacon, with no handshake required.
 
 | Class | Count | Share |
 |---|--:|--:|
-| single-OUI — 1 guess off the beacon | 3,811 | 99.8% |
-| full-8 in SSID — key fully determined | 8 | 0.2% |
+| single-OUI — 1 guess off the beacon | 4,458 | 99.8% |
+| full-8 in SSID — key fully determined | 9 | 0.2% |
 | split-OUI — 256-guess vs a handshake | 1 | 0.0% |
-| **Derivable off the beacon** | **3,819** | **99.97%** |
+| **Derivable off the beacon** | **4,467** | **99.98%** |
 
-3,652 of the single-OUI gateways had a BSSID tail that differs from the SSID tail
+4,240 of the single-OUI gateways had a BSSID tail that differs from the SSID tail
 (the benign same-OUI "Compal case") — still a single guess, because the leading
-byte is BSSID octet 3. 1,060 were secondary/virtual radios: the locally-administered
+byte is BSSID octet 3. 1,224 were secondary/virtual radios: the locally-administered
 bit flips octet 1, never octet 3, so the leading byte still reads off the beacon.
 
 The lone exception is a single **split-OUI** unit seen on a default SSID —
@@ -56,11 +56,11 @@ directly off the beacon.
 
 | Variant | Count |
 |---|--:|
-| no-band | 1,141 |
-| banded 5 GHz | 1,020 |
-| banded 2.4 GHz | 805 |
-| mesh backhaul (`-5G-BH`) | 751 |
-| IoT (`-IoT`) | 103 |
+| no-band | 1,332 |
+| banded 5 GHz | 1,177 |
+| banded 2.4 GHz | 969 |
+| mesh backhaul (`-5G-BH`) | 868 |
+| IoT (`-IoT`) | 122 |
 
 ## Split-OUI hardware (ARRIS/CommScope)
 
@@ -105,5 +105,6 @@ blocks map to only 17 actual companies.
 
 ---
 
-_Figures are a point-in-time snapshot from one metro survey and will drift as
-coverage grows. Regenerate with `python tools/analyze_wigle.py <export>.kml`._
+_Figures are a point-in-time snapshot from one metro survey and drift as coverage
+and the contributing collector databases change. Regenerate with
+`python tools/analyze_wigle.py <backup>.sqlite [more...]`._
