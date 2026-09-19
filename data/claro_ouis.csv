@@ -224,6 +224,14 @@ B0:1F:F4,Sagemcom,
 E0:B6:68,ZTE,
 A8:37:59,Huawei,
 
+# 2026-09-19 big warwalk, new districts (record ~22.9k new nets) - 6 new OUIs, IEEE-attributed (4 Huawei)
+EC:A1:D1,Huawei,
+9C:73:70,Huawei,
+14:AB:02,Huawei,
+04:E7:95,Huawei,
+10:72:23,Tellescom,
+48:83:C7,Sagemcom,
+
 # --- Observed-on-pattern caveat (data quality) -------------------------------
 # These rows are here because a device on the block was seen broadcasting a
 # default-style CLARO_ SSID - NOT because the block is confirmed Claro-issued CPE.
