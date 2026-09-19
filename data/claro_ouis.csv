@@ -220,6 +220,10 @@ B0:1F:F4,Sagemcom,
 78:20:51,TP-Link,
 5C:A6:E6,TP-Link,
 
+# 2026-09-18 phone warwalk, new streets - 2 new OUIs, IEEE-attributed
+E0:B6:68,ZTE,
+A8:37:59,Huawei,
+
 # --- Observed-on-pattern caveat (data quality) -------------------------------
 # These rows are here because a device on the block was seen broadcasting a
 # default-style CLARO_ SSID - NOT because the block is confirmed Claro-issued CPE.
