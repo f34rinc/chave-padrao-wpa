@@ -1,4 +1,4 @@
-# Claro Default Wi-Fi Key Weakness (`claro_wpa_key.py`)
+# Claro Default Wi-Fi Key Weakness — with NET &amp; VIVO/VIVOFIBRA (`chave_padrao.py`)
 
 🇺🇸 English · [Português](CLARO_DEFAULT_KEY_WEAKNESS.pt.md)
 
@@ -6,7 +6,12 @@ How the factory-default WPA2 password of certain Claro gateways is derived from
 the device MAC — so that it can be **derived** from public information alone (or
 recovered from a single captured handshake), *as long as the gateway is still on
 its factory SSID and password* — why the scheme is weak, which devices are
-affected, and what `claro_wpa_key.py` automates.
+affected, and what `chave_padrao.py` automates.
+
+This document is primarily the **Claro** deep-dive. Its sibling cable brand **NET**
+shares Claro's exact key scheme, and Telefónica's **VIVO / VIVOFIBRA** show the same
+class of weakness on a different derivation — both are covered in
+[§9](#9-the-weakness-generalised) (VIVO/VIVOFIBRA support is **detect-only**).
 
 > **Illustration note:** every MAC address, SSID, password and hash *shown in
 > this document* is a fabricated example. The findings are backed by real
@@ -69,7 +74,7 @@ hashcat -a 3 -m 22000 capture.hc22000 ?H?H3A9C2D
 Cracks in well under a second. Or let the script build the mask from the capture:
 
 ```bash
-python claro_wpa_key.py capture.hc22000
+python chave_padrao.py capture.hc22000
 ```
 
 Often you can skip the handshake entirely — see [§5](#5-the-leading-byte-is-usually-not-secret-either).
@@ -124,7 +129,7 @@ The captured artifact is a hashcat `-m 22000` line:
 WPA*02*<MIC>*<AP MAC>*<client MAC>*<ESSID hex>*<nonce>*<eapol>*<msg-pair>
 ```
 
-`claro_wpa_key.py` parses the ESSID hex out of that line to learn the SSID, then
+`chave_padrao.py` parses the ESSID hex out of that line to learn the SSID, then
 derives the candidate list — no device MAC needed.
 
 ---
@@ -151,7 +156,7 @@ password  = C2 3A9C2D            <- leading byte C2 = OUI octet 3 = BSSID octet 
 
 So on a single-OUI device the **full key is derivable from public radio data
 (BSSID + SSID) with no handshake at all** — a single guess you can simply try
-against the network. Across 1,000+ distinct live default-SSID gateways (see
+against the network. Across 3,500+ distinct live default-SSID gateways (see
 [§10](#10-evidence)), this is the norm — with the split-OUI caveat noted next.
 
 **The exception — split-OUI gateways.** Some units — **systematically**, the
@@ -180,7 +185,7 @@ class that a beacon-only scan systematically under-counts.
 
 Practically: **try `BSSID octet 3 + SSID tail` first** (one guess — works on the
 single-OUI majority); if it misses, fall back to the 256-guess mask (covers the
-split-OUI minority). `claro_wpa_key.py` does both automatically.
+split-OUI minority). `chave_padrao.py` does both automatically.
 
 ---
 
@@ -209,7 +214,7 @@ are effectively instant.
 
 ---
 
-## 7. What `claro_wpa_key.py` does
+## 7. What `chave_padrao.py` does
 
 1. **Parse** the `.hc22000` file → extract each network's `{essid, bssid}`.
 2. **Recognise** default Claro SSIDs and pull the 6-hex device tail — handling
@@ -273,6 +278,61 @@ UPC/Ubee, Arcadyan, Sky, and others. Whenever a default key is an algorithm over
 a public identifier, that algorithm eventually gets published and the whole
 fleet's defaults become recoverable.
 
+In Brazil specifically, [DPWO](https://github.com/caioluders/DPWO) — *"Default
+Password Wifi Owner"*, by caioluders — is a plugin-based tool that exploits the same
+class of factory default-password schemas across **NET, VIVO, GVT** and others. It is
+cited here purely as **independent corroboration**: the derivations in this project
+were reconstructed from our own captured handshakes and factory-label photographs, and
+**none of DPWO's code was used** — coming across it simply confirmed the logic we had
+already worked out.
+
+### Also first-party: VIVO / VIVOFIBRA (Telefónica Brasil)
+
+The same class of weakness runs on Telefónica's **VIVO / VIVOFIBRA** fibre CPE — a
+*different* derivation from Claro's, which `chave_padrao.py` also handles (detection
+plus the one derivable case, gated so it never guesses on hardware that isn't
+vulnerable).
+
+**Scheme.** The default SSID is `VIVO-<4H>` or `VIVOFIBRA-<4H>` (also
+`VIVOFIBRA-WIFI6-<4H>`, with an optional `-5G`), where `<4H>` is the last 4 hex of the
+base MAC. On the affected (old MitraStar) units the default key is the **MAC minus its
+first octet** — the last 5 bytes / 10 hex — *uppercase* for `VIVO-`, *lowercase* for
+`VIVOFIBRA-`. So the SSID leaks only 4 of the 10 hex; the other 6 come from the BSSID,
+and the key is fully recoverable only when the captured BSSID is the base MAC (its last
+4 hex equal the SSID tail) — i.e. off the 2.4 GHz radio, not a 5 GHz / virtual BSSID.
+
+**Manufacture era (factory-label photos).** The same weak-then-hardened switch as
+Claro, but earlier:
+
+| Era | Family (from labels) | Default key |
+|-----|----------------------|-------------|
+| **~2015–2018** | MitraStar DSL-100HN-T1 / DSL-2401HN, and GPT-2541GNAC-**N1** (stamped to Aug 2018) | **MAC-derived (weak)** |
+| **2020 →** | MitraStar GPT-2741 / GPT-2541-N2 (`84:0B:BB`), all Askey RTF3507 / RTF8115, ZTE | full-entropy random |
+
+The weak MitraStar DSL-100HN family carries no manufacture-date field (ANATEL
+homologation `…-15-…` = 2015, photos from 2016); the derivable GPT-2541GNAC-N1 on
+`98:97:D1` is stamped **F.FAB 1808 (Aug 2018)** with key `97d1f2148a` = MAC-derived. The
+hardened units are stamped **F.FAB 2003, 2011, 2208, 2211, 2301, 2312, 2405** (Mar 2020
+→ May 2024), all with random keys.
+
+**Detect-only gate.** In a ~2,400-network passive sample, ~92% of default-form
+VIVOFIBRA sat on OUIs whose firmware isn't yet confirmed — so emitting a "likely key"
+there would be a confidently-wrong guess. The tool therefore derives a VIVO/VIVOFIBRA
+key **only** on a confirmed-weak MitraStar OUI captured on its base MAC, and otherwise
+identifies the network without guessing.
+
+| Class | OUIs (from labels / handshakes) |
+|-------|---------------------------------|
+| **Weak** (MAC-derived) | `34:57:60`, `AC:C6:62`, `AC:C6:82`, `A4:33:D7`, `98:97:D1` |
+| **Hardened** (random) | `84:0B:BB`, `94:EA:EA`, `FC:12:63`, `10:72:23` (Tellescom Askey RTF3507), `E4:AB:89`, `CC:D4:A1` (Movistar), `E0:41:36`, and the `Vivo-Internet-` ZTE/WNC line (`D4:72:26`, `44:E4:EE`, `14:94:48`) |
+
+`10:72:23` (Tellescom-built Askey RTF3507VW) was moved weak→hardened after a
+`VIVOFIBRA-4DDB` label showed a random key (`pP3ZKZLzg7`), not a MAC-derived one.
+
+**Sibling brand: NET (Claro cable).** NET shares Claro's exact `octet-3 + SSID tail`
+scheme (same code path). A NET Pace/ARRIS **C6500 DOCSIS** label dated **11/2015**
+carries a MAC-derived key (`0F5653B4`), placing the coax weakness as far back as 2015.
+
 ---
 
 ## 10. Evidence
@@ -302,13 +362,14 @@ images, and on-label QR/barcode data:
 ### Corroboration at scale (passive survey)
 
 Beyond the 10 hands-on devices, a passive wardriving survey of one metropolitan
-area (fresh captures, **1,021 distinct Claro default-SSID gateways** — 1,389 BSSIDs
-before folding in each unit's secondary radios — after de-duplication) confirms
-the pattern is **pervasive and current**, not anecdotal:
+area (two collectors) — **3,569 distinct Claro default-SSID gateways** (4,939 BSSIDs
+before folding in each unit's secondary radios) — confirms the pattern is
+**pervasive and current**, not anecdotal (see [STATS.md](STATS.md) for the live
+figures, which grow as coverage expands):
 
-- **1,021 distinct gateways** were still broadcasting a factory `CLARO_<...>` SSID —
-  every one leaking the 6-hex tail, across **20+ vendor OUI blocks** (Kaon, Humax,
-  Compal, Sagemcom, ZTE, Vantiva/Technicolor, MitraStar, and more).
+- **3,569 distinct gateways** were still broadcasting a factory `CLARO_<...>` SSID —
+  every one leaking the 6-hex tail, across **191 catalogued OUI blocks (17 vendors)**
+  (Sagemcom, ZTE, Vantiva/Technicolor, Huawei, Kaon, MitraStar, and more).
 - Counting a gateway's guest / mesh-backhaul (`-5G-BH`) / IoT radios: those extra
   BSSIDs are the same MAC with the **locally-administered bit flipped** in octet 1
   — which never touches octet 3 — so the leading byte still reads off the beacon
@@ -386,7 +447,7 @@ the pattern is **pervasive and current**, not anecdotal:
 
 | File                     | Role                                                       |
 |--------------------------|------------------------------------------------------------|
-| `claro_wpa_key.py`          | parses `.hc22000`, builds the mask, drives hashcat         |
+| `chave_padrao.py`          | parses `.hc22000`, builds the mask, drives hashcat         |
 | `utils/charset_mask.py`  | reduced-charset mask from the BSSID + SSID hex             |
 | `*.hc22000` / `EVIDENCE.md` | captures and the real-evidence file — **not** shipped   |
 | `hashcat.exe`            | the cracker (`-m 22000 -a 3`) — installed separately       |

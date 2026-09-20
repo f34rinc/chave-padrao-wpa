@@ -1,6 +1,6 @@
-# CLARO Default WPA Key
+# Chave-Padrão WPA
 
-[![tests](https://github.com/f34rinc/claro-default-wpa-key/actions/workflows/ci.yml/badge.svg)](https://github.com/f34rinc/claro-default-wpa-key/actions/workflows/ci.yml)
+[![tests](https://github.com/f34rinc/chave-padrao-wpa/actions/workflows/ci.yml/badge.svg)](https://github.com/f34rinc/chave-padrao-wpa/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Python 3.6+](https://img.shields.io/badge/python-3.6%2B-blue.svg)
 ![Platform: Windows · macOS · Linux](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
@@ -20,13 +20,18 @@ characters (the MAC's last 6 hex), and the missing leading byte is the MAC's
 3rd octet — part of the vendor OUI, which the Wi-Fi **BSSID** also carries. So
 the whole key is usually derivable from the **BSSID + SSID alone** (often 1
 guess, no handshake); worst case it's a **256-guess** mask against a handshake,
-resolved in well under a second. `claro_wpa_key.py` reads the SSID from a capture,
+resolved in well under a second. `chave_padrao.py` reads the SSID from a capture,
 builds the `?H?H<tail>` mask, and (optionally) runs hashcat.
 
 > **Affected hardware only.** This works on older Claro gateways (~2021 and
 > earlier). Newer hardware (~2022+) ships full-entropy random keys and is **not**
 > affected — see *Affected devices* below. A `CLARO_<hex>` SSID means *worth
 > testing*, never *guaranteed vulnerable*.
+
+**Also handled:** `NET_` (Claro's cable brand — identical key scheme, same code path)
+and, **detect-only**, `VIVO-` / `VIVOFIBRA-` (Telefónica): the tool identifies them and
+derives a key only for confirmed-weak MitraStar OUIs captured on their base MAC — every
+other OUI is flagged, not guessed.
 
 For the full write-up of *why* the scheme is weak, see the technical document —
 **🇺🇸 [English](CLARO_DEFAULT_KEY_WEAKNESS.md)** · **🇧🇷 [Português](CLARO_DEFAULT_KEY_WEAKNESS.pt.md)**
@@ -52,12 +57,12 @@ not), so **neither the vendor nor the `CLARO_` SSID name tells you** — treat a
 tool simply finds no match on a random-key device, which is the correct answer.
 
 **It's widespread and current.** Beyond the 10 hands-on devices, a passive
-wardriving survey of one metro area (recent) found **over 1,000 distinct Claro
-gateways still broadcasting a factory `CLARO_` SSID** (1,389 BSSIDs once each
-unit's extra radios are counted) across 20+ vendor OUI blocks — every one leaking
-its 6-hex tail, and every one single-OUI (leading byte readable straight off the
+wardriving survey of one metro area found **3,500+ distinct Claro gateways still
+broadcasting a factory `CLARO_` SSID** (~4,900 BSSIDs once each unit's extra radios
+are counted) across 190+ vendor OUI blocks (17 makers) — every one leaking its
+6-hex tail, and nearly every one single-OUI (leading byte readable straight off the
 BSSID). So the "one guess off the beacon" case is the norm for the default-SSID
-population the tool targets.
+population the tool targets. See [STATS.md](STATS.md) for the current figures.
 
 **One honest caveat on the split-OUI exception:** split-OUI hardware
 (ARRIS/CommScope — see below) barely shows up in that count, but that is *not*
@@ -136,13 +141,13 @@ One cross-platform command — Windows, macOS, and Linux, no GUI:
 
 ```bash
 # interactive: run it, then drag capture file(s) into the window or paste path(s)
-python claro_wpa_key.py
+python chave_padrao.py
 
 # or pass one or more captures directly
-python claro_wpa_key.py capture.hc22000 [more.hc22000 ...]
+python chave_padrao.py capture.hc22000 [more.hc22000 ...]
 
 # flags: -y auto-run hashcat · -n print only · -d derive+save (no handshake) · -h help
-python claro_wpa_key.py -y capture.hc22000
+python chave_padrao.py -y capture.hc22000
 ```
 
 ### Sample run
@@ -151,10 +156,10 @@ Point it at a capture and it derives the key straight from the beacon — no
 handshake needed on a single-OUI gateway *(all data below is fabricated)*:
 
 ```text
-$ python claro_wpa_key.py sample.hc22000
+$ python chave_padrao.py sample.hc22000
 
 ======================================================================
-  CLARO Default WPA Key   -   sample.hc22000
+  Chave-Padrão WPA   -   sample.hc22000
   1 network(s) in this capture
 ======================================================================
 
@@ -197,7 +202,7 @@ the ready-to-run hashcat commands. If hashcat is found it offers to run them and
 reports the cracked key.
 
 Any recovered key — hashcat-confirmed, or beacon-derived in `--derive` mode — is
-appended to **`claro_cracked.jsonl`** (in the current folder), one JSON record per
+appended to **`cracked.jsonl`** (in the current folder), one JSON record per
 line carrying the SSID, BSSID, password, vendor/OUI, band, and how it was obtained
 (`class` / `source` / `confirmed` / `attempts`). Exact duplicates are skipped, so
 re-running the same capture won't pile up rows. That file is **real credential
@@ -220,15 +225,24 @@ hashcat -a 3 -m 22000 capture.hc22000 ?H?H3A9C2D
 
 ## Limitations
 
-- Only **affected** (pre-2022) Claro gateways on their factory-default SSID +
-  password. Random-key models (2022+) and renamed/re-keyed networks won't match.
-- Only handles SSIDs still in `CLARO_<band><hex>` form.
-- The tool derives the likely key (`BSSID octet 3 + tail`) and tries that **1
-  guess** first; split-OUI gateways (ARRIS/CommScope) need the `?H?H<tail>`
-  **256-guess** fallback against a handshake. On single-OUI gateways you can skip
-  the handshake entirely (see *How it works*); split can't be told apart from a
-  beacon alone, so if the 1-guess misses, that's the case the fallback is for.
-- The scheme is **uppercase** hex; for a lowercase variant, re-run with `?h?h`.
+- **Factory defaults only.** Works while a gateway is on its factory-default SSID
+  *and* password; renamed or re-keyed networks can't be derived from the name.
+- **`CLARO_` / `NET_`** (same octet-3 + SSID-tail scheme): only **affected**
+  (pre-2022) gateways. Random-key models (2022+) won't match, and only SSIDs still in
+  `CLARO_<band><hex>` / `NET_<band><hex>` form are handled.
+- **`VIVO-` / `VIVOFIBRA-`** (Telefónica): **detect-only.** A key is derived only on a
+  confirmed-weak MitraStar OUI captured on its **base MAC** (the SSID's 4-hex tail
+  equals the BSSID's last 4 — i.e. the 2.4 GHz radio). Hardened ODMs (random keys),
+  un-researched OUIs (~92% of the deployed VIVOFIBRA base), a 5 GHz/secondary capture,
+  or a renamed SSID are **identified but not guessed** (see [`schemes.py`](schemes.py)).
+- For `CLARO_`/`NET_`, the tool derives the likely key (`BSSID octet 3 + tail`) and
+  tries that **1 guess** first; split-OUI gateways (ARRIS/CommScope) need the
+  `?H?H<tail>` **256-guess** fallback against a handshake. On single-OUI gateways you
+  can skip the handshake entirely (see *How it works*); split can't be told apart from
+  a beacon alone, so if the 1-guess misses, that's the case the fallback is for.
+- The `CLARO_`/`NET_` scheme is **uppercase** hex; for a lowercase variant, re-run with
+  `?h?h`. (`VIVOFIBRA` keys are lowercase, `VIVO` uppercase — the tool cases them
+  automatically.)
 
 ## Utilities
 
@@ -250,6 +264,24 @@ General helpers, not specific to the Claro scheme.
 If you own one of these gateways: **change the default Wi-Fi password** (and
 ideally the SSID). Once the password is no longer the MAC-derived default, none
 of the above applies.
+
+## Related work & corroboration
+
+**[DPWO](https://github.com/caioluders/DPWO)** — *"Default Password Wifi Owner"*,
+by [caioluders](https://github.com/caioluders) — is a plugin-based tool that exploits
+the factory default-password schemas of Brazilian ISPs (**NET, VIVO, GVT**, and
+others). It's independent prior work that **corroborates the same weakness class**
+this project documents — recovering a factory Wi-Fi key from the broadcast
+identifiers — across overlapping brands, notably **NET** (Claro's cable arm) and
+**VIVO**.
+
+The `CLARO_` research here was carried out **independently**, over several months,
+from our own captured handshakes and factory-label photographs, before we came across
+DPWO; DPWO then served as **external confirmation** that this class of default-key
+weakness is well-known and reproducible across providers. The derivations in this
+repo (the `CLARO_`/`NET_` "octet-3 + SSID-tail" scheme and the VIVO/VIVOFIBRA
+MitraStar gate in [`schemes.py`](schemes.py)) were reconstructed from our own
+evidence — not ported from DPWO.
 
 ## Contributing
 

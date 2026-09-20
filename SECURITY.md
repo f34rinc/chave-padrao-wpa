@@ -56,7 +56,7 @@ Brazilian users and vendors may also route coordinated reports through
 
 ## Reporting a problem with the tool itself
 
-For a bug or a security issue in `claro_wpa_key.py` or the other scripts (as
+For a bug or a security issue in `chave_padrao.py` or the other scripts (as
 opposed to the Claro weakness they describe), please open a
 [GitHub Security Advisory](https://docs.github.com/en/code-security/security-advisories)
 or a regular issue. There is no sensitive server-side component — everything runs

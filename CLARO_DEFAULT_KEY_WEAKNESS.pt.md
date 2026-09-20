@@ -1,4 +1,4 @@
-# Fraqueza da Chave Wi-Fi Padrão da Claro (`claro_wpa_key.py`)
+# Fraqueza da Chave Wi-Fi Padrão — Claro, NET e VIVO/VIVOFIBRA (`chave_padrao.py`)
 
 🇧🇷 Português · [English](CLARO_DEFAULT_KEY_WEAKNESS.md)
 
@@ -6,7 +6,13 @@ Como a senha WPA2 padrão de fábrica de certos gateways Claro é derivada do MA
 aparelho — de modo que pode ser **derivada** apenas de informação pública (ou
 recuperada de um único handshake capturado), *desde que o gateway ainda esteja
 com o SSID e a senha de fábrica* — por que o esquema é fraco, quais aparelhos são
-afetados, e o que o `claro_wpa_key.py` automatiza.
+afetados, e o que o `chave_padrao.py` automatiza.
+
+Este documento é principalmente o aprofundamento sobre a **Claro**. Sua marca de cabo
+irmã **NET** usa exatamente o mesmo esquema de chave, e a **VIVO / VIVOFIBRA** da
+Telefônica apresenta a mesma classe de fraqueza em uma derivação diferente — ambas
+cobertas na [§9](#9-a-fraqueza-generalizada) (o suporte a VIVO/VIVOFIBRA é **somente
+detecção**).
 
 > **Nota sobre as ilustrações:** todo endereço MAC, SSID, senha e hash *mostrado
 > neste documento* é um exemplo fictício. Os achados são respaldados por
@@ -70,7 +76,7 @@ Quebra em bem menos de um segundo. Ou deixe o script montar a máscara a partir 
 captura:
 
 ```bash
-python claro_wpa_key.py capture.hc22000
+python chave_padrao.py capture.hc22000
 ```
 
 Muitas vezes você pode pular o handshake por completo — veja
@@ -127,7 +133,7 @@ O artefato capturado é uma linha hashcat `-m 22000`:
 WPA*02*<MIC>*<AP MAC>*<client MAC>*<ESSID hex>*<nonce>*<eapol>*<msg-pair>
 ```
 
-O `claro_wpa_key.py` extrai o hex do ESSID dessa linha para descobrir o SSID,
+O `chave_padrao.py` extrai o hex do ESSID dessa linha para descobrir o SSID,
 depois deriva a lista de candidatos — sem precisar do MAC do aparelho.
 
 ---
@@ -155,7 +161,7 @@ senha  = C2 3A9C2D            <- byte inicial C2 = octeto 3 do OUI = octeto 3 do
 
 Então, em um aparelho single-OUI, a **chave completa é derivável de dados públicos
 de rádio (BSSID + SSID) sem handshake nenhum** — uma única tentativa que você
-simplesmente experimenta contra a rede. Ao longo de mais de 1.000 gateways
+simplesmente experimenta contra a rede. Ao longo de mais de 3.500 gateways
 distintos com SSID de fábrica ativos (veja [§10](#10-evidências)), isso é a norma
 — com a ressalva de split-OUI observada a seguir.
 
@@ -187,7 +193,7 @@ beacon **subconta** sistematicamente.
 
 Na prática: **tente `octeto 3 do BSSID + final do SSID` primeiro** (uma tentativa
 — funciona na maioria single-OUI); se falhar, recorra à máscara de 256 tentativas
-(cobre a minoria split-OUI). O `claro_wpa_key.py` faz os dois automaticamente.
+(cobre a minoria split-OUI). O `chave_padrao.py` faz os dois automaticamente.
 
 ---
 
@@ -217,7 +223,7 @@ probabilística. Os níveis 1–3 são efetivamente instantâneos.
 
 ---
 
-## 7. O que o `claro_wpa_key.py` faz
+## 7. O que o `chave_padrao.py` faz
 
 1. **Analisa** o arquivo `.hc22000` → extrai o `{essid, bssid}` de cada rede.
 2. **Reconhece** SSIDs Claro padrão e extrai o final de 6 hex do aparelho —
@@ -285,6 +291,64 @@ Thomson/SpeedTouch, BT Home Hub, UPC/Ubee, Arcadyan, Sky, e outras. Sempre que u
 chave padrão é um algoritmo sobre um identificador público, esse algoritmo acaba
 sendo publicado e os padrões de toda a frota se tornam recuperáveis.
 
+No Brasil especificamente, o [DPWO](https://github.com/caioluders/DPWO) — *"Default
+Password Wifi Owner"*, de caioluders — é uma ferramenta baseada em plugins que explora
+a mesma classe de esquemas de senha padrão de fábrica em **NET, VIVO, GVT** e outros. É
+citado aqui puramente como **corroboração independente**: as derivações deste projeto
+foram reconstruídas a partir dos nossos próprios handshakes capturados e fotos de
+etiqueta de fábrica, e **nenhum código do DPWO foi usado** — encontrá-lo apenas
+confirmou a lógica que já havíamos deduzido.
+
+### Também de primeira mão: VIVO / VIVOFIBRA (Telefônica Brasil)
+
+A mesma classe de fraqueza existe na CPE de fibra **VIVO / VIVOFIBRA** da Telefônica —
+uma derivação *diferente* da da Claro, que o `chave_padrao.py` também trata (detecção
+mais o único caso derivável, com trava para nunca chutar em hardware que não é
+vulnerável).
+
+**Esquema.** O SSID padrão é `VIVO-<4H>` ou `VIVOFIBRA-<4H>` (também
+`VIVOFIBRA-WIFI6-<4H>`, com um `-5G` opcional), onde `<4H>` são os 4 últimos hex do MAC
+base. Nas unidades afetadas (MitraStar antigo) a chave padrão é o **MAC sem o primeiro
+octeto** — os últimos 5 bytes / 10 hex — em *MAIÚSCULAS* para `VIVO-`, *minúsculas* para
+`VIVOFIBRA-`. Ou seja, o SSID vaza apenas 4 dos 10 hex; os outros 6 vêm do BSSID, e a
+chave só é totalmente recuperável quando o BSSID capturado é o MAC base (seus 4 últimos
+hex são iguais ao final do SSID) — isto é, no rádio de 2,4 GHz, não num BSSID de 5 GHz /
+virtual.
+
+**Época de fabricação (fotos de etiqueta).** A mesma transição fraco→robusto da Claro,
+porém mais cedo:
+
+| Época | Família (pelas etiquetas) | Chave padrão |
+|-------|---------------------------|--------------|
+| **~2015–2018** | MitraStar DSL-100HN-T1 / DSL-2401HN, e GPT-2541GNAC-**N1** (carimbado até ago/2018) | **derivada do MAC (fraca)** |
+| **2020 →** | MitraStar GPT-2741 / GPT-2541-N2 (`84:0B:BB`), todos os Askey RTF3507 / RTF8115, ZTE | aleatória, entropia plena |
+
+A família fraca MitraStar DSL-100HN não tem campo de data de fabricação (homologação
+ANATEL `…-15-…` = 2015, fotos de 2016); o GPT-2541GNAC-N1 derivável no `98:97:D1` está
+carimbado **F.FAB 1808 (ago/2018)** com chave `97d1f2148a` = derivada do MAC. As
+unidades robustas trazem **F.FAB 2003, 2011, 2208, 2211, 2301, 2312, 2405** (mar/2020 →
+mai/2024), todas com chaves aleatórias.
+
+**Trava "somente detectar".** Numa amostra passiva de ~2.400 redes, ~92% das VIVOFIBRA
+em formato padrão estavam em OUIs cujo firmware ainda não foi confirmado — então emitir
+uma "chave provável" ali seria um chute confiantemente errado. Por isso a ferramenta
+deriva uma chave VIVO/VIVOFIBRA **apenas** num OUI MitraStar comprovadamente fraco
+capturado no seu MAC base, e caso contrário identifica a rede sem chutar.
+
+| Classe | OUIs (por etiquetas / handshakes) |
+|--------|-----------------------------------|
+| **Fraco** (derivado do MAC) | `34:57:60`, `AC:C6:62`, `AC:C6:82`, `A4:33:D7`, `98:97:D1` |
+| **Robusto** (aleatório) | `84:0B:BB`, `94:EA:EA`, `FC:12:63`, `10:72:23` (Askey RTF3507 da Tellescom), `E4:AB:89`, `CC:D4:A1` (Movistar), `E0:41:36`, e a linha `Vivo-Internet-` da ZTE/WNC (`D4:72:26`, `44:E4:EE`, `14:94:48`) |
+
+O `10:72:23` (Askey RTF3507VW fabricado pela Tellescom) passou de fraco→robusto depois
+que uma etiqueta `VIVOFIBRA-4DDB` mostrou uma chave aleatória (`pP3ZKZLzg7`), e não uma
+derivada do MAC.
+
+**Marca irmã: NET (Claro cabo).** A NET usa exatamente o mesmo esquema `octeto 3 + final
+do SSID` da Claro (mesmo caminho de código). Uma etiqueta de um **C6500 DOCSIS**
+Pace/ARRIS da NET datada de **11/2015** traz uma chave derivada do MAC (`0F5653B4`),
+colocando a fraqueza no cabo já em 2015.
+
 ---
 
 ## 10. Evidências
@@ -314,13 +378,14 @@ homologação da ANATEL, e dados de QR/código de barras nas etiquetas:
 ### Corroboração em escala (varredura passiva)
 
 Além dos 10 aparelhos em mãos, uma varredura passiva de wardriving de uma área
-metropolitana (capturas recentes, **1.021 gateways Claro distintos com SSID de
-fábrica** — 1.389 BSSIDs antes de agrupar os rádios secundários de cada unidade —
-após deduplicação) confirma que o padrão é **difundido e atual**, não anedótico:
+metropolitana (dois coletores) — **3.569 gateways Claro distintos com SSID de
+fábrica** (4.939 BSSIDs antes de agrupar os rádios secundários de cada unidade) —
+confirma que o padrão é **difundido e atual**, não anedótico (veja o
+[STATS.md](STATS.md) para os números atuais, que crescem conforme a cobertura):
 
-- **1.021 gateways distintos** ainda transmitiam um SSID `CLARO_<...>` de fábrica —
-  cada um vazando o final de 6 hex, em **mais de 20 blocos de OUI de fabricantes**
-  (Kaon, Humax, Compal, Sagemcom, ZTE, Vantiva/Technicolor, MitraStar, e mais).
+- **3.569 gateways distintos** ainda transmitiam um SSID `CLARO_<...>` de fábrica —
+  cada um vazando o final de 6 hex, em **191 blocos de OUI catalogados (17 fabricantes)**
+  (Sagemcom, ZTE, Vantiva/Technicolor, Huawei, Kaon, MitraStar, e mais).
 - Contando os rádios de convidado / backhaul de mesh (`-5G-BH`) / IoT de um
   gateway: esses BSSIDs extras são o mesmo MAC com o **bit de administração local
   invertido** no octeto 1 — que nunca toca o octeto 3 — então o byte inicial ainda
@@ -400,7 +465,7 @@ após deduplicação) confirma que o padrão é **difundido e atual**, não aned
 
 | Arquivo                     | Papel                                                      |
 |-----------------------------|------------------------------------------------------------|
-| `claro_wpa_key.py`          | analisa `.hc22000`, monta a máscara, dirige o hashcat      |
+| `chave_padrao.py`          | analisa `.hc22000`, monta a máscara, dirige o hashcat      |
 | `utils/charset_mask.py`     | máscara de charset reduzido a partir do hex do BSSID + SSID |
 | `*.hc22000` / `EVIDENCE.md` | capturas e o arquivo de evidência real — **não** distribuídos |
 | `hashcat.exe`               | o quebrador (`-m 22000 -a 3`) — instalado separadamente    |
