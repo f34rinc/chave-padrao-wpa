@@ -19,9 +19,10 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 sys.path.insert(0, os.path.join(ROOT, "utils"))
 
-import claro_wpa_key as k          # noqa: E402
+import chave_padrao as k            # noqa: E402
 import analyze_wigle as w          # noqa: E402
 import charset_mask as cm          # noqa: E402
+import schemes as sc               # noqa: E402
 
 
 class TestSsidParsing(unittest.TestCase):
@@ -34,6 +35,8 @@ class TestSsidParsing(unittest.TestCase):
             "CLARO_3A9C2D-5G-BH":   ("3a9c2d", None),   # mesh backhaul suffix
             "CLARO_112233-IoT":     ("112233", None),   # IoT suffix
             "CLARO_2G12345678":     ("345678", "12345678"),  # embedded full-8
+            "NET_5G3A9C2D":         ("3a9c2d", None),   # NET = Claro cable brand, same scheme
+            "NET_2G112233":         ("112233", None),
         }
         for essid, expected in cases.items():
             self.assertEqual(k.parse_claro_ssid(essid), expected, essid)
@@ -211,7 +214,7 @@ class TestCrackLog(unittest.TestCase):
         # Point the log at a temp file; identical records must not pile up (dedup, C).
         tmp = tempfile.mkdtemp()
         old_file, old_save = k.CRACK_FILE, k.SAVE_CRACKS
-        k.CRACK_FILE, k.SAVE_CRACKS = os.path.join(tmp, "claro_cracked.jsonl"), True
+        k.CRACK_FILE, k.SAVE_CRACKS = os.path.join(tmp, "cracked.jsonl"), True
         try:
             net = {"essid": "CLARO_5G3A9C2D", "bssid": "743aef3a9c2d"}
             rec = k.crack_record(net, "EF3A9C2D", cls="single-OUI",
@@ -227,6 +230,98 @@ class TestCrackLog(unittest.TestCase):
             self.assertEqual(json.loads(lines[0])["password"], "EF3A9C2D")
         finally:
             k.CRACK_FILE, k.SAVE_CRACKS = old_file, old_save
+
+
+class TestSchemesVivo(unittest.TestCase):
+    """VIVO / VIVOFIBRA scheme (schemes.py) under the DETECT-ONLY policy: a key is
+    presented in exactly one case - a confirmed-weak MitraStar OUI captured on its base
+    MAC (SSID 4-hex tail == BSSID last 4). Every other case is identified but keyless.
+    Real vendor OUI *prefixes* are public IEEE data (as in data/claro_ouis.csv); every
+    full BSSID and key below is FABRICATED."""
+
+    def test_weak_base_mac_upper(self):
+        # Weak OUI 34:57:60, and the SSID tail (BBCC) == BSSID last 4 -> base MAC -> KEY.
+        r = sc.derive("VIVO-BBCC", "34:57:60:AA:BB:CC")
+        self.assertEqual(r["isp"], "VIVO")
+        self.assertEqual(r["gate"], "weak")
+        self.assertTrue(r["base_mac"])
+        self.assertTrue(r["determined"])
+        self.assertEqual(r["key"], "5760AABBCC")     # MAC minus 1st octet, UPPER (VIVO-)
+
+    def test_weak_base_mac_lower(self):
+        # VIVOFIBRA weak OUI 98:97:D1, tail 2233 == BSSID last 4 -> lowercase KEY.
+        r = sc.derive("VIVOFIBRA-2233", "98:97:D1:11:22:33")
+        self.assertEqual(r["isp"], "VIVOFIBRA")
+        self.assertTrue(r["determined"])
+        self.assertEqual(r["key"], "97d1112233")     # lowercase (VIVOFIBRA-)
+
+    def test_wifi6_variant_and_band_suffix(self):
+        # VIVOFIBRA-WIFI6-<4H> infix + a trailing -5G band tag both parse to the tail,
+        # and a weak base-MAC capture still derives. Weak OUI AC:C6:62.
+        self.assertEqual(sc.parse_tail("VIVOFIBRA-WIFI6-E058"), "e058")
+        self.assertEqual(sc.parse_tail("VIVO-AA48-5G"), "aa48")
+        r = sc.derive("VIVOFIBRA-WIFI6-E058", "AC:C6:62:AA:E0:58")
+        self.assertTrue(r["determined"])
+        self.assertEqual(r["key"], "c662aae058")
+
+    def test_weak_but_not_base_mac_no_key(self):
+        # Weak OUI, but the capture is the 5 GHz/secondary BSSID (tail != BSSID last 4):
+        # detect-only -> no key, and the note points at the 2.4 GHz base MAC.
+        r = sc.derive("VIVOFIBRA-7658-5G", "A4:33:D7:AA:BB:CC")
+        self.assertEqual(r["gate"], "weak")
+        self.assertFalse(r["base_mac"])
+        self.assertFalse(r["determined"])
+        self.assertIsNone(r["key"])
+        self.assertIn("base MAC", r["note"])
+
+    def test_hardened_oui_no_key(self):
+        # 84:0B:BB is a confirmed-hardened (random-key) block, even on a base-MAC capture.
+        r = sc.derive("VIVOFIBRA-3456", "84:0B:BB:12:34:56")
+        self.assertEqual(r["gate"], "hardened")
+        self.assertFalse(r["determined"])
+        self.assertIsNone(r["key"])
+
+    def test_tellescom_askey_hardened(self):
+        # 10:72:23 (Tellescom-built Askey RTF3507VW) ships random keys - a VIVOFIBRA-4DDB
+        # label showed a non-MAC-derived key - so it must gate hardened, not derive.
+        r = sc.derive("VIVOFIBRA-4DDB", "10:72:23:FB:4D:DB")
+        self.assertEqual(r["gate"], "hardened")
+        self.assertFalse(r["determined"])
+        self.assertIsNone(r["key"])
+
+    def test_unknown_oui_no_key(self):
+        # Detect-only: an un-researched OUI is IDENTIFIED but never guessed.
+        r = sc.derive("VIVO-1234", "AA:BB:CC:11:12:34")
+        self.assertEqual(r["gate"], "unknown")
+        self.assertTrue(r["base_mac"])               # it *is* the base MAC ...
+        self.assertFalse(r["determined"])            # ... but the OUI isn't researched
+        self.assertIsNone(r["key"])                  # so no key is produced
+
+    def test_renamed_is_not_default(self):
+        # Renamed but still <prefix>-<junk>: detected as Telefónica, but not default form.
+        for essid in ("VIVO-NALA", "VIVO-5G", "VIVOFIBRA- 149. 5G"):
+            self.assertIsNone(sc.parse_tail(essid), essid)
+            r = sc.derive(essid, "AC:C6:62:AA:BB:CC")
+            self.assertIsNotNone(r, essid)           # still detected as Telefónica ...
+            self.assertFalse(r["default"], essid)    # ... but not the default form
+            self.assertIsNone(r["key"], essid)
+
+    def test_spaced_rename_not_detected(self):
+        # A spaced rename ("VIVOFIBRA 149") has no default-form hyphen prefix, so it isn't
+        # a derive target at all -> falls to the generic skip, not handle_vivo.
+        for essid in ("VIVOFIBRA 149", "VIVO FIBRA 803"):
+            self.assertIsNone(sc.detect(essid), essid)
+            self.assertIsNone(sc.derive(essid, "AC:C6:62:AA:BB:CC"), essid)
+
+    def test_vivo_internet_excluded(self):
+        # Vivo-Internet-<4H> is a different, hardened multi-ODM line (ZTE/WNC/Blu Castle)
+        # -> not a VIVO- target. SSID + BSSID here are fabricated.
+        self.assertIsNone(sc.detect("Vivo-Internet-1234"))
+        self.assertIsNone(sc.derive("Vivo-Internet-1234", "AA:BB:CC:DD:12:34"))
+
+    def test_non_telefonica_is_none(self):
+        self.assertIsNone(sc.derive("CLARO_5G3A9C2D", "743aef3a9c2d"))
+        self.assertIsNone(sc.derive("MyHomeWiFi", "743aef3a9c2d"))
 
 
 if __name__ == "__main__":

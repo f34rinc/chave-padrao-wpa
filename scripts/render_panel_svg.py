@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render claro_wpa_key.py's interactive launcher panel into a self-contained SVG
+"""Render chave_padrao.py's interactive launcher panel into a self-contained SVG
 'terminal screenshot' for the README.
 
 Runs the tool's own _panel() with colour ON, captures the real ANSI output, and turns
@@ -18,7 +18,7 @@ from contextlib import redirect_stdout
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
-import claro_wpa_key as k  # noqa: E402
+import chave_padrao as k  # noqa: E402
 
 OUT = os.path.join(ROOT, "docs", "terminal.svg")
 
@@ -91,7 +91,7 @@ def to_svg(lines):
     for cx, col in ((18, "#ff5f56"), (38, "#ffbd2e"), (58, "#27c93f")):
         out.append(f'<circle cx="{cx}" cy="{TITLEH // 2}" r="6" fill="{col}"/>')
     out.append(f'<text x="{width // 2}" y="{TITLEH // 2 + 4}" text-anchor="middle" '
-               f'fill="{GRAY}" font-size="12">python claro_wpa_key.py</text>')
+               f'fill="{GRAY}" font-size="12">python chave_padrao.py</text>')
 
     for row, runs in enumerate(lines):
         y = TITLEH + PADTOP + (row + 1) * LINEH - 5

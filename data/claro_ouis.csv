@@ -1,5 +1,5 @@
 # Claro-deployed vendor OUI blocks - PUBLIC IEEE registry data, NOT credentials.
-# claro_wpa_key.py reads this to label a gateway's likely maker and to flag
+# chave_padrao.py reads this to label a gateway's likely maker and to flag
 # split-OUI units. Contribute a row via pull request - see CONTRIBUTING.md.
 #
 #   oui     first 3 octets, uppercase, colon-separated (e.g. 74:3A:EF)

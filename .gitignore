@@ -25,10 +25,12 @@ hashcat.potfile
 *.restore
 *.log
 
-# recovered keys written by claro_wpa_key.py — real credential material.
-# The crack log is JSONL now; match it by name AND by format. This repo ships
-# no .json/.jsonl of its own, so the broad rules are safe — if a legitimate
-# config/data JSON is ever added, force it in with `git add -f <file>`.
+# recovered keys written by chave_padrao.py — real credential material.
+# The crack log is JSONL now (cracked.jsonl); match it by name AND by format, and
+# keep the old claro_cracked.* names covered. This repo ships no .json/.jsonl of its
+# own, so the broad rules are safe — if a legitimate config/data JSON is ever added,
+# force it in with `git add -f <file>`.
+cracked.jsonl
 claro_cracked.txt
 claro_cracked.jsonl
 *cracked*.txt

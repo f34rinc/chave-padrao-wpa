@@ -40,13 +40,13 @@ import argparse
 from collections import Counter, OrderedDict
 
 # Reuse the exact SSID/OUI logic the recovery tool uses, so this analyzer and
-# claro_wpa_key.py can never disagree about what counts as a default Claro SSID
+# chave_padrao.py can never disagree about what counts as a default CLARO_/NET_ SSID
 # or a split-OUI block. The script sits in tools/; the module is one level up.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    from claro_wpa_key import parse_claro_ssid, oui_of, OUI_VENDORS, SPLIT_OUIS
+    from chave_padrao import parse_claro_ssid, oui_of, OUI_VENDORS, SPLIT_OUIS
 except Exception as exc:                                   # pragma: no cover
-    sys.exit(f"error: couldn't import claro_wpa_key.py (run this from the repo): {exc}")
+    sys.exit(f"error: couldn't import chave_padrao.py (run this from the repo): {exc}")
 
 
 # ---- input parsing ----------------------------------------------------------
