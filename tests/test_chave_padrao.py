@@ -13,6 +13,7 @@ import sys
 import json
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
@@ -167,6 +168,221 @@ class TestCharsetMaskPositional(unittest.TestCase):
         cand = cm.positional_candidates("a1b2c3250b33", "CLARO_5G250B2E", 8)
         key = "C3250B2E"                                         # C3 + 250B2E
         self.assertTrue(all(key[i] in cand[i] for i in range(8)))
+
+
+class TestCharsetMaskOptions(unittest.TestCase):
+    # ---- max-length parsing/validation (min stays pinned at 8) ----
+    def test_max_len_valid(self):
+        self.assertEqual(cm.coerce_max_len("10", 8), (10, None))
+
+    def test_max_len_boundaries_ok(self):
+        self.assertEqual(cm.coerce_max_len("8", 8), (8, None))
+        self.assertEqual(cm.coerce_max_len("63", 8), (63, None))
+
+    def test_max_len_below_min_rejected(self):
+        val, err = cm.coerce_max_len("7", 8)
+        self.assertEqual(val, 8)                 # keeps current
+        self.assertIsNotNone(err)
+
+    def test_max_len_above_max_rejected(self):
+        val, err = cm.coerce_max_len("64", 8)
+        self.assertEqual(val, 8)
+        self.assertIsNotNone(err)
+
+    def test_max_len_non_integer_rejected(self):
+        val, err = cm.coerce_max_len("abc", 12)
+        self.assertEqual(val, 12)                # keeps whatever was current
+        self.assertIsNotNone(err)
+
+    # ---- case parsing/validation ----
+    def test_case_valid_and_case_insensitive(self):
+        self.assertEqual(cm.coerce_case("lower", "upper"), ("lower", None))
+        self.assertEqual(cm.coerce_case("MIXED", "upper"), ("mixed", None))
+
+    def test_case_bogus_rejected(self):
+        val, err = cm.coerce_case("sideways", "upper")
+        self.assertEqual(val, "upper")           # keeps current
+        self.assertIsNotNone(err)
+
+    # ---- interactive prompt control commands vs. paths ----
+    def test_prompt_len_command(self):
+        self.assertEqual(cm.parse_prompt_command("len 10"), ("len", "10"))
+        self.assertEqual(cm.parse_prompt_command("maxlen 12"), ("len", "12"))
+
+    def test_prompt_case_command(self):
+        self.assertEqual(cm.parse_prompt_command("case lower"), ("case", "lower"))
+
+    def test_prompt_bare_case_words(self):
+        self.assertEqual(cm.parse_prompt_command("lower"), ("case", "lower"))
+        self.assertEqual(cm.parse_prompt_command("MIXED"), ("case", "mixed"))
+        self.assertEqual(cm.parse_prompt_command("upper"), ("case", "upper"))
+
+    def test_prompt_positional_toggle(self):
+        for word in ("pos", "positional", "-p"):
+            self.assertEqual(cm.parse_prompt_command(word), ("positional", None), word)
+
+    def test_prompt_help(self):
+        for word in ("help", "h", "-h"):
+            self.assertEqual(cm.parse_prompt_command(word), ("help", None), word)
+
+    def test_prompt_path_passthrough(self):
+        line = r"C:\caps\CLARO_handshake.hc22000"
+        self.assertEqual(cm.parse_prompt_command(line), ("path", line))
+
+    # ---- charset case modes ----
+    def test_hex_charset_upper_is_default(self):
+        cs = cm.hex_charset("6802b816dcc0", "")
+        self.assertEqual(cs, cs.upper())
+        self.assertIn("B", cs)
+
+    def test_hex_charset_lower(self):
+        cs = cm.hex_charset("6802b816dcc0", "", case="lower")
+        self.assertEqual(cs, cs.lower())
+        self.assertIn("b", cs)
+        self.assertNotIn("B", cs)
+
+    def test_hex_charset_mixed_has_both_cases(self):
+        cs = cm.hex_charset("6802b816dcc0", "", case="mixed")
+        self.assertIn("B", cs)                   # letter present in both cases
+        self.assertIn("b", cs)
+        self.assertEqual(cs.count("0"), 1)       # digit not duplicated
+
+    # ---- positional tier honours case ----
+    def test_positional_lower_uses_lowercase(self):
+        cand = cm.positional_candidates("a0b1c23a9c2e", "CLARO_2G3A9C2D", 8, case="lower")
+        cmd, ks = cm.positional_command("cap.hc22000", cand, case="lower")
+        self.assertEqual(ks, 2)
+        self.assertIn("c23a9c2", cmd)            # high-byte literals now lowercase
+        self.assertNotIn("C23A9C2", cmd)
+
+    def test_positional_mixed_doubles_letters(self):
+        cand = cm.positional_candidates("a0b1c23a9c2e", "CLARO_2G3A9C2D", 8, case="mixed")
+        self.assertIn("C", cand[0])              # high nibble 'C' -> {C, c}
+        self.assertIn("c", cand[0])
+
+
+class TestCharsetMaskScheme(unittest.TestCase):
+    # VIVO/VIVOFIBRA default keys are the MAC minus octet 1 = 10 hex; VIVO upper,
+    # VIVOFIBRA lower. charset_mask auto-defaults length/case for those SSIDs.
+
+    # ---- scheme_defaults: (isp, max_len, case) hint from the SSID ----
+    def test_scheme_vivo(self):
+        self.assertEqual(cm.scheme_defaults("VIVO-BBCC"), ("VIVO", 10, "upper"))
+
+    def test_scheme_vivofibra(self):
+        self.assertEqual(cm.scheme_defaults("VIVOFIBRA-1234"), ("VIVOFIBRA", 10, "lower"))
+
+    def test_scheme_vivofibra_wifi6_band(self):
+        self.assertEqual(cm.scheme_defaults("VIVOFIBRA-WIFI6-1234-5G"),
+                         ("VIVOFIBRA", 10, "lower"))
+
+    def test_scheme_vivo_renamed_still_detected(self):
+        self.assertEqual(cm.scheme_defaults("VIVO-NALA"), ("VIVO", 10, "upper"))
+
+    def test_scheme_vivo_internet_excluded(self):
+        self.assertEqual(cm.scheme_defaults("VIVO-INTERNET-1234"), (None, None, None))
+
+    def test_scheme_non_vivo(self):
+        self.assertEqual(cm.scheme_defaults("CLARO_2G3A9C2D"), (None, None, None))
+
+    # ---- resolve_settings: explicit value wins, else scheme hint, else defaults ----
+    def test_resolve_vivofibra_auto(self):
+        self.assertEqual(cm.resolve_settings("VIVOFIBRA-1234", None, None),
+                         ("VIVOFIBRA", 10, "lower"))
+
+    def test_resolve_vivo_auto(self):
+        self.assertEqual(cm.resolve_settings("VIVO-BBCC", None, None),
+                         ("VIVO", 10, "upper"))
+
+    def test_resolve_explicit_max_len_wins(self):
+        self.assertEqual(cm.resolve_settings("VIVO-BBCC", 8, None), ("VIVO", 8, "upper"))
+
+    def test_resolve_explicit_case_wins(self):
+        self.assertEqual(cm.resolve_settings("VIVOFIBRA-1234", None, "upper"),
+                         ("VIVOFIBRA", 10, "upper"))
+
+    def test_resolve_non_vivo_defaults(self):
+        self.assertEqual(cm.resolve_settings("CLARO_2G3A9C2D", None, None),
+                         (None, 8, "upper"))
+
+    def test_resolve_non_vivo_explicit(self):
+        self.assertEqual(cm.resolve_settings("MyHomeWiFi", 12, "mixed"),
+                         (None, 12, "mixed"))
+
+
+class TestCharsetMaskRun(unittest.TestCase):
+    # ---- run-mode launch flags ----
+    def test_parse_flags_run_auto(self):
+        positional, max_len, case, no_color, run_mode, files = cm._parse_flags(
+            ["-y", "cap.hc22000"])
+        self.assertEqual(run_mode, "auto")
+        self.assertEqual(files, ["cap.hc22000"])
+
+    def test_parse_flags_ask(self):
+        *_, run_mode, files = cm._parse_flags(["--ask", "cap.hc22000"])
+        self.assertEqual(run_mode, "ask")
+
+    def test_parse_flags_norun(self):
+        *_, run_mode, _files = cm._parse_flags(["-n", "cap.hc22000"])
+        self.assertEqual(run_mode, "off")
+
+    def test_parse_flags_default_off(self):
+        *_, run_mode, _files = cm._parse_flags(["cap.hc22000"])
+        self.assertEqual(run_mode, "off")
+
+    # ---- run-mode prompt words ----
+    def test_prompt_run_words(self):
+        self.assertEqual(cm.parse_prompt_command("run"), ("run", "auto"))
+        self.assertEqual(cm.parse_prompt_command("ask"), ("run", "ask"))
+        self.assertEqual(cm.parse_prompt_command("norun"), ("run", "off"))
+
+    # ---- argv construction (pure) ----
+    def test_build_argv(self):
+        self.assertEqual(
+            cm._build_argv("hashcat", "cap.hc22000", "-1 ABCD ?1?1"),
+            ["hashcat", "-m", "22000", "-a", "3", "cap.hc22000", "-1", "ABCD", "?1?1"])
+
+    def test_build_argv_positional_tail(self):
+        argv = cm._build_argv("hashcat", "cap.hc22000", "-1 56 -2 0D B81?1?2")
+        self.assertEqual(argv[:6],
+                         ["hashcat", "-m", "22000", "-a", "3", "cap.hc22000"])
+        self.assertIn("B81?1?2", argv)
+
+
+class TestCharsetMaskCascade(unittest.TestCase):
+    # The run cascade (auto mode) with the hashcat process stubbed: we assert on the
+    # order/number of invocations and which mask each got, never on the stub itself.
+    UNIFORM = "-1 ABCD ?1?1?1?1?1?1?1?1"
+    POS = "-1 56 B81?1?1?1?1?1"
+
+    def _invocations(self, positional_tail, exit_codes):
+        calls, codes = [], list(exit_codes)
+
+        def fake_run(argv, cwd=None):
+            calls.append(argv)
+            return mock.Mock(returncode=codes.pop(0))
+
+        with mock.patch.object(cm.shutil, "which", return_value="hashcat"), \
+             mock.patch.object(cm.subprocess, "run", side_effect=fake_run):
+            cm._maybe_run("cap.hc22000", self.UNIFORM, "1.0 s",
+                          positional_tail, 16, "auto")
+        return calls
+
+    def test_positional_then_uniform_on_miss(self):
+        calls = self._invocations(self.POS, [1, 1])   # positional exhausts, then uniform
+        self.assertEqual(len(calls), 2)
+        self.assertIn("B81?1?1?1?1?1", calls[0])       # positional ran first
+        self.assertIn("ABCD", calls[1])                # uniform ran second
+
+    def test_stops_when_positional_cracks(self):
+        calls = self._invocations(self.POS, [0])       # positional cracks -> no fallback
+        self.assertEqual(len(calls), 1)
+        self.assertIn("B81?1?1?1?1?1", calls[0])
+
+    def test_uniform_only_when_no_positional(self):
+        calls = self._invocations(None, [1])           # nothing positional -> uniform only
+        self.assertEqual(len(calls), 1)
+        self.assertIn("ABCD", calls[0])
 
 
 class TestCrackLog(unittest.TestCase):

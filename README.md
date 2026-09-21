@@ -246,18 +246,21 @@ hashcat -a 3 -m 22000 capture.hc22000 ?H?H3A9C2D
 
 ## Utilities
 
-General helpers, not specific to the Claro scheme.
+General helpers, not specific to the Claro\VIVO scheme.
 
 - [utils/charset_mask.py](utils/charset_mask.py) — reads a `.hc22000`, pulls each
   network's BSSID + SSID, and prints a hashcat mask command whose custom charset
-  is only the uppercase hex characters present in that BSSID + SSID hex tail. A
-  generic keyspace-reduction helper. Standalone, stdlib only.
+  is only the hex characters present in that BSSID + SSID hex runs. A generic
+  keyspace-reduction helper. Standalone, stdlib only.
   `python utils/charset_mask.py capture.hc22000`
   Add **`--positional`** for a *per-position* charset — where the BSSID and SSID
   agree the position is a fixed literal, only the diverging low byte varies. On
   MAC-derived keys that collapses the keyspace from ~10⁸ to a **median of 4** (max
   64 across ~1,400 real gateways) while still containing the key. It's a fast
   heuristic; the uniform mask stays the guaranteed fallback.
+  Run with no arguments for an interactive menu; **`--max-len N`** also tries longer
+  keys and **`--case upper|lower|mixed`** sets the charset case.
+  → **[Full usage guide](docs/charset_mask.md)**
 
 ## Defensive takeaway
 

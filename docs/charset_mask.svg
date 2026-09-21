@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="894" height="686" viewBox="0 0 894 686" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace" font-size="13">
+<rect x="0" y="0" width="894" height="686" rx="10" fill="#1c2128" stroke="#30363d"/>
+<rect x="1" y="1" width="892" height="34" rx="9" fill="#161b22"/>
+<rect x="1" y="25" width="892" height="10" fill="#161b22"/>
+<line x1="0" y1="34" x2="894" y2="34" stroke="#30363d"/>
+<circle cx="18" cy="17" r="6" fill="#ff5f56"/>
+<circle cx="38" cy="17" r="6" fill="#ffbd2e"/>
+<circle cx="58" cy="17" r="6" fill="#27c93f"/>
+<text x="447" y="21" text-anchor="middle" fill="#768390" font-size="12">python utils/charset_mask.py</text>
+<text x="20" y="63" xml:space="preserve"><tspan fill="#768390">======================================================================</tspan></text>
+<text x="20" y="83" xml:space="preserve"><tspan fill="#c9d1d9">  </tspan><tspan fill="#e6edf3" font-weight="700">charset_mask</tspan><tspan fill="#c9d1d9">  </tspan><tspan fill="#768390">- WPA hex-key mask builder</tspan></text>
+<text x="20" y="103" xml:space="preserve"><tspan fill="#768390">======================================================================</tspan></text>
+<text x="20" y="123" xml:space="preserve"><tspan fill="#c9d1d9">  Drag a .hc22000 file into this window (or paste its path), then Enter.</tspan></text>
+<text x="20" y="143" xml:space="preserve"><tspan fill="#c9d1d9">  </tspan><tspan fill="#768390">Blank line or Ctrl-C to quit.</tspan></text>
+<text x="20" y="163" xml:space="preserve"></text>
+<text x="20" y="183" xml:space="preserve"><tspan fill="#c9d1d9">  </tspan><tspan fill="#768390">Commands - type one here (or set at launch as a flag):</tspan></text>
+<text x="20" y="203" xml:space="preserve"><tspan fill="#c9d1d9">    </tspan><tspan fill="#e3b341">len N</tspan><tspan fill="#c9d1d9">          max key length 8-63  </tspan><tspan fill="#768390">(&gt; 8 also tries longer keys)</tspan></text>
+<text x="20" y="223" xml:space="preserve"><tspan fill="#c9d1d9">    </tspan><tspan fill="#e3b341">case MODE</tspan><tspan fill="#c9d1d9">      charset case: </tspan><tspan fill="#e3b341">upper</tspan><tspan fill="#c9d1d9"> / </tspan><tspan fill="#e3b341">lower</tspan><tspan fill="#c9d1d9"> / </tspan><tspan fill="#e3b341">mixed</tspan><tspan fill="#c9d1d9">  </tspan><tspan fill="#768390">(mixed = both cases, bigger keyspace)</tspan></text>
+<text x="20" y="243" xml:space="preserve"><tspan fill="#c9d1d9">    </tspan><tspan fill="#e3b341">pos</tspan><tspan fill="#c9d1d9">            toggle the aggressive per-position mask</tspan></text>
+<text x="20" y="263" xml:space="preserve"><tspan fill="#c9d1d9">    </tspan><tspan fill="#e3b341">run</tspan><tspan fill="#c9d1d9"> / </tspan><tspan fill="#e3b341">ask</tspan><tspan fill="#c9d1d9"> / </tspan><tspan fill="#e3b341">norun</tspan><tspan fill="#c9d1d9">   run hashcat: auto / confirm each / just print </tspan><tspan fill="#768390">(positional first, then uniform)</tspan></text>
+<text x="20" y="283" xml:space="preserve"><tspan fill="#c9d1d9">    </tspan><tspan fill="#e3b341">help</tspan><tspan fill="#c9d1d9">           redraw this panel</tspan></text>
+<text x="20" y="303" xml:space="preserve"><tspan fill="#c9d1d9">  </tspan><tspan fill="#768390">VIVO / VIVOFIBRA SSIDs auto-use max-len 10 (VIVOFIBRA lowercase) unless you set len/case.</tspan></text>
+<text x="20" y="323" xml:space="preserve"></text>
+<text x="20" y="343" xml:space="preserve"><tspan fill="#c9d1d9">  </tspan><tspan fill="#768390">max-len:</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#e6edf3" font-weight="700">auto</tspan><tspan fill="#c9d1d9">   </tspan><tspan fill="#768390">*</tspan><tspan fill="#c9d1d9">   </tspan><tspan fill="#768390">case:</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#e6edf3" font-weight="700">auto</tspan><tspan fill="#c9d1d9">   </tspan><tspan fill="#768390">*</tspan><tspan fill="#c9d1d9">   </tspan><tspan fill="#768390">positional:</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#e6edf3" font-weight="700">on</tspan><tspan fill="#c9d1d9">   </tspan><tspan fill="#768390">*</tspan><tspan fill="#c9d1d9">   </tspan><tspan fill="#768390">run:</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#e6edf3" font-weight="700">off</tspan><tspan fill="#c9d1d9">   </tspan><tspan fill="#768390">*</tspan><tspan fill="#c9d1d9">   </tspan><tspan fill="#768390">hashcat:</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#57ab5a">found</tspan></text>
+<text x="20" y="363" xml:space="preserve"></text>
+<text x="20" y="383" xml:space="preserve"><tspan fill="#768390">&gt;</tspan><tspan fill="#c9d1d9"> example.hc22000</tspan></text>
+<text x="20" y="403" xml:space="preserve"><tspan fill="#c9d1d9">----------------------------------------------------------------------</tspan></text>
+<text x="20" y="423" xml:space="preserve"><tspan fill="#c9d1d9">  SSID     : CLARO_2G3A9C2D</tspan></text>
+<text x="20" y="443" xml:space="preserve"><tspan fill="#c9d1d9">  BSSID    : A0:B1:C2:3A:9C:2E</tspan></text>
+<text x="20" y="463" xml:space="preserve"><tspan fill="#c9d1d9">  SSID hex : 3A9C2D   (runs &gt;= 2; charset = BSSID hex + these)</tspan></text>
+<text x="20" y="483" xml:space="preserve"><tspan fill="#c9d1d9">  Charset : 01239ABCDE   (10 distinct hex chars, upper-case)</tspan></text>
+<text x="20" y="503" xml:space="preserve"><tspan fill="#c9d1d9">  Keyspace: 10^8 = 100,000,000 candidates</tspan></text>
+<text x="20" y="523" xml:space="preserve"><tspan fill="#c9d1d9">  Est.    : ~11.1 min @ 150K H/s</tspan></text>
+<text x="20" y="543" xml:space="preserve"></text>
+<text x="20" y="563" xml:space="preserve"><tspan fill="#c9d1d9">  Command :</tspan></text>
+<text x="20" y="583" xml:space="preserve"><tspan fill="#c9d1d9">    hashcat -m 22000 -a 3 example.hc22000 -1 01239ABCDE ?1?1?1?1?1?1?1?1</tspan></text>
+<text x="20" y="603" xml:space="preserve"></text>
+<text x="20" y="623" xml:space="preserve"><tspan fill="#c9d1d9">  Positional (aggressive) - keyspace 2 candidate(s):</tspan></text>
+<text x="20" y="643" xml:space="preserve"><tspan fill="#c9d1d9">    hashcat -m 22000 -a 3 example.hc22000 -1 DE C23A9C2?1</tspan></text>
+<text x="20" y="663" xml:space="preserve"><tspan fill="#768390">&gt;</tspan><tspan fill="#c9d1d9"> █</tspan></text>
+</svg>
