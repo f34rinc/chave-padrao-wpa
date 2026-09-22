@@ -152,6 +152,49 @@ class TestAnalyzerClassify(unittest.TestCase):
         self.assertIsNone(w.classify({"essid": "MyHomeWiFi", "bssid": "743aef3a9c2d"}))
 
 
+class TestAnalyzerNetBreakout(unittest.TestCase):
+    def test_claro_ssid_tagged_claro(self):
+        c = w.classify({"essid": "CLARO_2G3A9C2D", "bssid": "743aef3a9c2d"})
+        self.assertEqual(c["isp"], "CLARO")
+
+    def test_net_ssid_tagged_net(self):
+        # NET_ shares the Claro scheme but should be counted as its own ISP.
+        c = w.classify({"essid": "NET_5G3A9C2D", "bssid": "743aef3a9c2d"})
+        self.assertEqual(c["isp"], "NET")
+
+
+class TestAnalyzerTelefonica(unittest.TestCase):
+    # Fabricated pairs, each hitting one schemes.py gate (weak/hardened/unknown sets).
+    PAIRS = [
+        ("VIVO-EEFF",      "34576000eeff"),   # weak MitraStar OUI + base-MAC -> determined
+        ("VIVOFIBRA-1234", "840bbb001234"),   # hardened ODM -> detect-only
+        ("VIVO-ABCD",      "00112233abcd"),    # unknown OUI -> detect-only
+        ("VIVO-NALA",      "743aef3a9c2d"),    # renamed VIVO- (non-default)
+        ("MyHomeWiFi",     "743aef3a9c2d"),    # not Telefonica -> excluded
+    ]
+
+    def _summary(self):
+        items = [i for i in (sc.derive(e, b) for e, b in self.PAIRS) if i]
+        return w.telefonica_summary(items)
+
+    def test_counts(self):
+        s = self._summary()
+        self.assertEqual(s["detected"], 4)     # 3 VIVO + 1 VIVOFIBRA (MyHomeWiFi excluded)
+        self.assertEqual(s["default"], 3)      # renamed VIVO-NALA excluded
+        self.assertEqual(s["vivo"], 3)
+        self.assertEqual(s["vivofibra"], 1)
+        self.assertEqual(s["vivo_default"], 2)       # EEFF, ABCD (NALA renamed out)
+        self.assertEqual(s["vivofibra_default"], 1)  # 1234
+
+    def test_gate_and_derivability(self):
+        s = self._summary()
+        self.assertEqual(s["weak"], 1)         # gate breakdown among defaults
+        self.assertEqual(s["hardened"], 1)
+        self.assertEqual(s["unknown"], 1)
+        self.assertEqual(s["determined"], 1)   # only the weak + base-MAC VIVO derives
+        self.assertEqual(s["detect_only"], 2)  # default - determined
+
+
 class TestCharsetMaskPositional(unittest.TestCase):
     def test_positional_collapses_and_contains_key(self):
         # Fabricated: BSSID A0:B1:C2:3A:9C:2E, SSID CLARO_2G3A9C2D.

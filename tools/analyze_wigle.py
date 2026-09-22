@@ -45,6 +45,7 @@ from collections import Counter, OrderedDict
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
     from chave_padrao import parse_claro_ssid, oui_of, OUI_VENDORS, SPLIT_OUIS
+    import schemes
 except Exception as exc:                                   # pragma: no cover
     sys.exit(f"error: couldn't import chave_padrao.py (run this from the repo): {exc}")
 
@@ -204,10 +205,32 @@ def classify(net):
     beacon_tail = net["bssid"][6:12]
     return {
         "essid": net["essid"], "bssid": net["bssid"], "oui": oui,
+        "isp": "NET" if net["essid"].upper().startswith("NET_") else "CLARO",
         "local": local, "base_oui": base, "vendor": vendor, "kind": kind,
         "variant": ssid_variant(net["essid"]),
         "tail_match": (beacon_tail == tail6),
     }
+
+
+def telefonica_summary(items):
+    """Aggregate schemes.derive() dicts (VIVO/VIVOFIBRA) into counts for the report.
+    Detect-only policy: 'determined' is the ONLY derivable class - everything else is
+    identified but not derivable (hardened random key, un-researched OUI, a non-base
+    5 GHz/secondary radio, or a renamed SSID)."""
+    s = {"detected": len(items), "default": 0, "vivo": 0, "vivofibra": 0,
+         "vivo_default": 0, "vivofibra_default": 0,
+         "weak": 0, "hardened": 0, "unknown": 0, "determined": 0, "detect_only": 0}
+    for it in items:
+        vf = it["isp"] == "VIVOFIBRA"
+        s["vivofibra" if vf else "vivo"] += 1
+        if it["default"]:
+            s["default"] += 1
+            s["vivofibra_default" if vf else "vivo_default"] += 1
+            s[it["gate"]] += 1                 # weak / hardened / unknown, defaults only
+            if it["determined"]:
+                s["determined"] += 1
+    s["detect_only"] = s["default"] - s["determined"]
+    return s
 
 
 # ---- reporting --------------------------------------------------------------
@@ -235,12 +258,18 @@ def analyze(paths):
     stats["unique"] = len(by_bssid)
     gateways = []
     split_hw = []                     # ARRIS/CommScope split-OUI hardware, ANY SSID
+    telefonica = []                   # VIVO / VIVOFIBRA - identified via schemes.py (detect-only)
     for net in by_bssid.values():
         c = classify(net)
         if c:
             gateways.append(c)
-        elif net["essid"].upper().startswith("CLARO"):
+        elif net["essid"].upper().startswith(("CLARO", "NET_")):
             non_default_claro += 1
+        # VIVO / VIVOFIBRA ride a different scheme - schemes.py identifies them and gates
+        # derivability; the analyzer only reports, never forces them into the Claro frame.
+        t = schemes.derive(net["essid"], net["bssid"])
+        if t:
+            telefonica.append(t)
         # A split gateway on a renamed SSID drops out of the default-Claro count
         # entirely (you can't derive a renamed net). Track split HARDWARE by OUI,
         # regardless of SSID, so it stays visible instead of vanishing.
@@ -250,10 +279,10 @@ def analyze(paths):
             tail6, _ = parse_claro_ssid(net["essid"])
             split_hw.append({"bssid": net["bssid"], "essid": net["essid"],
                              "default": bool(tail6)})
-    return gateways, stats, non_default_claro, split_hw
+    return gateways, stats, non_default_claro, split_hw, telefonica
 
 
-def render(gateways, stats, non_default_claro, split_hw, detail=False, rows_only=False):
+def render(gateways, stats, non_default_claro, split_hw, telefonica, detail=False, rows_only=False):
     lines = []
     ap = lines.append
 
@@ -261,11 +290,13 @@ def render(gateways, stats, non_default_claro, split_hw, detail=False, rows_only
     unknown = OrderedDict()           # REAL (universal) OUIs not in the CSV -> count
     variant_counts = Counter()
     oui_counts = Counter()
+    isp_counts = Counter()            # CLARO vs NET among default gateways
     oui_local = {}                    # oui -> is it a locally-administered address?
     single = split = full8 = mismatch = virtual = 0
     for g in gateways:
         variant_counts[g["variant"]] += 1
         oui_counts[g["oui"]] += 1
+        isp_counts[g["isp"]] += 1
         oui_local[g["oui"]] = g["local"]
         if g["local"]:
             virtual += 1              # secondary/virtual radio, not a distinct gateway or OUI
@@ -283,20 +314,30 @@ def render(gateways, stats, non_default_claro, split_hw, detail=False, rows_only
     if rows_only:
         return _render_new_rows(unknown, oui_counts)
 
+    tele = telefonica_summary(telefonica)
     total = len(gateways)
     ap("=" * 70)
-    ap("  WiGLE Claro-gateway analysis")
+    ap("  WiGLE ISP-gateway analysis")
     ap("=" * 70)
     ap(f"  files parsed ....... {stats['files']}"
        + (f"  ({stats['bad_files']} unreadable)" if stats["bad_files"] else ""))
     ap(f"  AP records read .... {stats['rows']}   (WiGLE logs each AP many times on a drive)")
     ap(f"  unique APs ......... {stats.get('unique', 0)}")
     ap("")
-    ap(f"  default-Claro BSSIDs ........ {total}")
+    ap("  default-SSID gateways by ISP prefix:")
+    ap(f"    CLARO_ ....... {isp_counts.get('CLARO', 0):6d}   (derivable off the beacon)")
+    ap(f"    NET_ ......... {isp_counts.get('NET', 0):6d}   (same scheme as CLARO)")
+    ap(f"    VIVO- ........ {tele['vivo_default']:6d}   (detect-only)")
+    ap(f"    VIVOFIBRA- ... {tele['vivofibra_default']:6d}   (detect-only)")
+    ap("")
+    ap(f"  default CLARO_/NET_ BSSIDs .. {total}")
+    if isp_counts.get("NET"):
+        ap(f"    of which CLARO_ ..........  {isp_counts.get('CLARO', 0)}")
+        ap(f"    of which NET_ ............  {isp_counts.get('NET', 0)}")
     if virtual:
         ap(f"    of which secondary radios   {virtual}   (locally-administered MAC: guest / mesh / IoT)")
         ap(f"    distinct physical-ish ....  {total - virtual}   (primary BSSIDs only)")
-    ap(f"  CLARO_-named but non-default  {non_default_claro}   (renamed / changed key)")
+    ap(f"  CLARO_/NET_-named but non-default  {non_default_claro}   (renamed / changed key)")
     if not total:
         ap("")
         ap("  No factory-default CLARO_ SSIDs in this capture.")
@@ -387,6 +428,24 @@ def render(gateways, stats, non_default_claro, split_hw, detail=False, rows_only
             ap(f"  {mac_fmt(g['bssid'])}  {g['essid']:<22}  {v:<28}  "
                f"{g['kind'].split(' ')[0]:<11}  tail:{tail}")
 
+    ap("")
+    ap("  --- VIVO / VIVOFIBRA (Telefonica - detect-only) ------------------")
+    if tele["detected"]:
+        ap(f"  detected (default + renamed) .. {tele['detected']}   "
+           f"(VIVO- {tele['vivo']}, VIVOFIBRA- {tele['vivofibra']})")
+        ap(f"  default-form SSIDs ............ {tele['default']}")
+        ap(f"    weak MitraStar OUI ......... {tele['weak']}")
+        ap(f"    hardened ODM (random key) .. {tele['hardened']}")
+        ap(f"    OUI not yet researched ..... {tele['unknown']}")
+        ap(f"  -> derivable (weak + base-MAC)  {tele['determined']}")
+        ap(f"  -> detect-only ............... {tele['detect_only']}   "
+           f"(identified, but no key off the beacon)")
+        ap("  NOTE: VIVO/VIVOFIBRA keys are confirmed only on specific weak MitraStar OUIs")
+        ap("  captured on the base (2.4 GHz) MAC. Hardened / un-researched OUIs are")
+        ap("  identified but NOT derivable - capture a handshake to crack those directly.")
+    else:
+        ap("  None detected in this capture.")
+
     ap("=" * 70)
     return "\n".join(lines)
 
@@ -407,9 +466,9 @@ def mac_fmt(b):
 def main():
     ap = argparse.ArgumentParser(
         prog="analyze_wigle.py",
-        description="Summarize a WiGLE .kml/.csv/.sqlite export for affected Claro "
-                    "gateways: single-vs-split-OUI derivability, OUI histogram, "
-                    "and new-OUI CSV rows for data/claro_ouis.csv.")
+        description="Summarize a WiGLE .kml/.csv/.sqlite export for affected ISP "
+                    "gateways: CLARO_/NET_ single-vs-split-OUI derivability, "
+                    "VIVO/VIVOFIBRA detect-only, OUI histogram, and new-OUI CSV rows.")
     ap.add_argument("paths", nargs="+",
                     help="WiGLE .kml / .csv / SQLite backup (extensionless OK); globs OK")
     ap.add_argument("--detail", action="store_true",
@@ -426,8 +485,8 @@ def main():
         hits = glob.glob(p)
         paths.extend(hits if hits else [p])
 
-    gateways, stats, non_default, split_hw = analyze(paths)
-    report = render(gateways, stats, non_default, split_hw,
+    gateways, stats, non_default, split_hw, telefonica = analyze(paths)
+    report = render(gateways, stats, non_default, split_hw, telefonica,
                     detail=args.detail, rows_only=args.rows)
     print(report)
 
