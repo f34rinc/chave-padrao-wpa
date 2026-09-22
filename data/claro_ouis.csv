@@ -236,6 +236,48 @@ EC:A1:D1,Huawei,
 7C:F1:7E,TP-Link,
 5C:62:8B,TP-Link,
 
+# --- NET_ cable-fleet blocks (added 2026-09-22 from the two-collector survey) --
+# Same ISP-CPE makers as the CLARO_ fleet, on OUI blocks first seen via NET_
+# SSIDs (NET = Claro's cable brand). Universal IEEE registrations; single-OUI
+# unless a handshake later confirms split.
+# Omitted as consumer/renamed (seen on NET_/CLARO_ but not ISP CPE, not derivable):
+#   TP-Link  0C:EF:15 B0:19:21 B0:95:75 AC:15:A2 0C:80:63 E4:C3:2A 68:FF:7B
+#   Tenda    50:0F:F5     Xiaomi  50:D2:F5 (the lone CLARO_ outlier)
+E8:20:E2,Humax,
+94:2C:B3,Humax,
+90:F3:05,Humax,
+10:62:D0,Vantiva/Technicolor,
+54:A6:5C,Vantiva/Technicolor,
+90:58:51,Vantiva/Technicolor,
+B4:2A:0E,Vantiva/Technicolor,
+80:D0:4A,Vantiva/Technicolor,
+D4:B9:2F,Vantiva/Technicolor,
+A4:56:CC,Vantiva/Technicolor,
+10:C2:5A,Vantiva/Technicolor,
+BC:9B:68,Vantiva/Technicolor,
+38:3F:B3,Vantiva/Technicolor,
+08:7E:64,Vantiva/Technicolor,
+14:B7:F8,Vantiva/Technicolor,
+70:03:7E,Vantiva/Technicolor,
+70:5A:9E,Vantiva/Technicolor,
+94:6A:77,Vantiva/Technicolor,
+48:00:33,Vantiva/Technicolor,
+60:3D:26,Vantiva/Technicolor,
+50:09:59,Vantiva/Technicolor,
+5C:E3:0E,Arris/CommScope,
+BC:2E:48,Arris/CommScope,
+D4:AB:82,Arris/CommScope,
+50:95:51,Arris/CommScope,
+94:8F:CF,Arris/CommScope,
+18:9C:27,Arris/CommScope,
+F8:2D:C0,Arris/CommScope,
+4C:12:65,Arris/CommScope,
+00:36:76,Arris/CommScope,
+84:A4:23,Sagemcom,
+28:9E:FC,Sagemcom,
+00:37:B7,Sagemcom,
+F8:AB:05,Sagemcom,
+
 # --- Observed-on-pattern caveat (data quality) -------------------------------
 # These rows are here because a device on the block was seen broadcasting a
 # default-style CLARO_ SSID - NOT because the block is confirmed Claro-issued CPE.
