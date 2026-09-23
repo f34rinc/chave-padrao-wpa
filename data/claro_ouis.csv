@@ -1,6 +1,8 @@
 # Claro-deployed vendor OUI blocks - PUBLIC IEEE registry data, NOT credentials.
 # chave_padrao.py reads this to label a gateway's likely maker and to flag
 # split-OUI units. Contribute a row via pull request - see CONTRIBUTING.md.
+# This is the PURE ISP-CPE (derivable) catalogue: consumer/3rd-party blocks seen
+# cloning a CLARO_/NET_ SSID are NOT ISP CPE and live in data/consumer_ouis.csv.
 #
 #   oui     first 3 octets, uppercase, colon-separated (e.g. 74:3A:EF)
 #   vendor  maker name (best-effort is fine)
@@ -43,7 +45,6 @@ C8:52:61,Arris/CommScope router,yes
 10:93:97,Arris/CommScope,
 78:6A:1F,Arris/CommScope,
 A8:97:CD,Arris/CommScope,
-78:32:1B,D-Link,
 00:E4:06,Huawei,
 30:C5:0F,Huawei,
 34:58:40,Huawei,
@@ -110,10 +111,6 @@ EC:BE:DD,Sagemcom,
 F8:08:4F,Sagemcom,
 2C:D8:AE,SEI Robotics,
 10:41:21,Tellescom,
-28:87:BA,TP-Link,
-50:3D:D1,TP-Link,
-60:32:B1,TP-Link,
-D8:47:32,TP-Link,
 00:CB:7A,Vantiva/Technicolor,
 08:C7:F5,Vantiva/Technicolor,
 10:A7:93,Vantiva/Technicolor,
@@ -181,30 +178,26 @@ EC:C0:1B,Huawei,
 94:00:B0,Huawei,
 D4:E2:CB,Vantiva/Technicolor,
 
-# 2026-09-08 40km round trip - 8 new OUIs, IEEE-attributed
+# 2026-09-08 40km round trip - 6 new OUIs, IEEE-attributed (+2 consumer -> consumer_ouis.csv)
 FC:73:FB,Huawei,
 54:BA:D9,Intelbras,
 D4:46:49,Huawei,
 78:65:59,Sagemcom,
-00:90:4C,Epigram/Broadcom,
 98:2A:0A,Intelbras,
 B4:1C:30,ZTE,
-EC:75:0C,TP-Link,
 
-# 2026-09-10 second-collector run, new district (school area) - 3 new OUIs, IEEE-attributed
+# 2026-09-10 second-collector run, new district (school area) - 2 new OUIs, IEEE-attributed (+1 consumer -> consumer_ouis.csv)
 5C:64:7A,Huawei,
-A8:6E:84,TP-Link,
 34:5D:9E,Sagemcom,
 
 # 2026-09-11 second-collector run (continued) - 2 new OUIs, IEEE-attributed
 68:77:DA,ZTE,
 E4:66:AB,ZTE,
 
-# 2026-09-12 new-area walk (different district) - 4 new OUIs, IEEE-attributed
+# 2026-09-12 new-area walk (different district) - 3 new OUIs, IEEE-attributed (+1 consumer -> consumer_ouis.csv)
 B0:5B:99,Sagemcom,
 F4:2D:06,ZTE,
 18:6A:81,Sagemcom,
-70:4F:57,TP-Link,
 
 # 2026-09-13 new-area walk - 3 new OUIs, IEEE-attributed (WNC = new vendor, Wistron NeWeb ODM/CPE)
 C4:0D:96,Huawei,
@@ -214,11 +207,9 @@ E0:37:BF,WNC,
 # 2026-09-13 second-collector DB (evening) - 1 new OUI, IEEE-attributed
 44:89:6D,Tellescom,
 
-# 2026-09-15 Meier drive (north zone) - 4 new OUIs, IEEE-attributed (2 CPE + 2 TP-Link consumer)
+# 2026-09-15 Meier drive (north zone) - 2 new OUIs, IEEE-attributed (+2 TP-Link consumer -> consumer_ouis.csv)
 5C:76:95,Vantiva/Technicolor,
 B0:1F:F4,Sagemcom,
-78:20:51,TP-Link,
-5C:A6:E6,TP-Link,
 
 # 2026-09-18 phone warwalk, new streets - 2 new OUIs, IEEE-attributed
 E0:B6:68,ZTE,
@@ -232,17 +223,11 @@ EC:A1:D1,Huawei,
 10:72:23,Tellescom,
 48:83:C7,Sagemcom,
 
-# 2026-09-20 second-collector (son's) backup - 2 new OUIs, both TP-Link (consumer - see caveat)
-7C:F1:7E,TP-Link,
-5C:62:8B,TP-Link,
-
 # --- NET_ cable-fleet blocks (added 2026-09-22 from the two-collector survey) --
 # Same ISP-CPE makers as the CLARO_ fleet, on OUI blocks first seen via NET_
 # SSIDs (NET = Claro's cable brand). Universal IEEE registrations; single-OUI
 # unless a handshake later confirms split.
-# Omitted as consumer/renamed (seen on NET_/CLARO_ but not ISP CPE, not derivable):
-#   TP-Link  0C:EF:15 B0:19:21 B0:95:75 AC:15:A2 0C:80:63 E4:C3:2A 68:FF:7B
-#   Tenda    50:0F:F5     Xiaomi  50:D2:F5 (the lone CLARO_ outlier)
+# (Consumer/3rd-party blocks seen on these SSIDs live in data/consumer_ouis.csv.)
 E8:20:E2,Humax,
 94:2C:B3,Humax,
 90:F3:05,Humax,
@@ -278,15 +263,16 @@ F8:2D:C0,Arris/CommScope,
 00:37:B7,Sagemcom,
 F8:AB:05,Sagemcom,
 
-# --- Observed-on-pattern caveat (data quality) -------------------------------
-# These rows are here because a device on the block was seen broadcasting a
-# default-style CLARO_ SSID - NOT because the block is confirmed Claro-issued CPE.
-# They are CONSUMER / 3rd-party brands, most likely renamed routers or added APs
-# cloning the SSID. A non-Claro device does not run the MAC-derived default-key
-# scheme, so its key is NOT derivable - these are false positives for the scheme
-# (~0.3% of the surveyed default gateways). Kept for vendor labelling; treat as
-# UNVERIFIED and not part of the derivable population.
-#   00:90:4C  Epigram/Broadcom  - Broadcom reference-design OUI; white-label APs/repeaters
-#   78:32:1B  D-Link            - consumer brand
-#   TP-Link (mostly consumer)   - 28:87:BA 50:3D:D1 60:32:B1 D8:47:32 EC:75:0C A8:6E:84 70:4F:57 78:20:51 5C:A6:E6 7C:F1:7E 5C:62:8B
-# Ambiguous (left unflagged - can be ISP CPE or consumer): Intelbras, SEI Robotics, Tellescom.
+# 2026-09-23 new-area warwalk - 2 new OUIs, IEEE-attributed (both Huawei CPE)
+28:68:D2,Huawei,
+F0:9B:B8,Huawei,
+
+# --- Consumer / 3rd-party blocks moved out (data quality) --------------------
+# Blocks once listed here that proved to be CONSUMER / 3rd-party brands (a device
+# seen broadcasting a default-style CLARO_/NET_ SSID, but a renamed router or added
+# AP cloning the name - NOT ISP CPE, key NOT derivable) were moved to
+# data/consumer_ouis.csv, keeping this file a PURE ISP-CPE, derivable catalogue.
+# analyze_wigle.py reads that ledger to recognize them and EXCLUDE them from the
+# derivability figures, so they no longer over-count as the old ~0.3% false positives.
+# Ambiguous (left here, unflagged - can be ISP CPE or consumer): Intelbras,
+# SEI Robotics, Tellescom.
