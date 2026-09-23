@@ -1,0 +1,53 @@
+# Consumer / 3rd-party OUI blocks seen on a default CLARO_/NET_ SSID - but NOT
+# ISP-issued CPE. PUBLIC IEEE registry data, NOT credentials.
+#
+# WHY THIS FILE EXISTS
+# A device on one of these blocks was observed broadcasting a factory-default-style
+# CLARO_/NET_ SSID, but the block belongs to a consumer/retail brand (TP-Link, Tenda,
+# Xiaomi, D-Link, a Broadcom reference design). These are almost certainly renamed
+# routers or added APs cloning the SSID - a non-Claro device does NOT run the
+# MAC-derived default-key scheme, so its key is NOT derivable off the beacon. They are
+# false positives for the scheme, deliberately kept OUT of data/claro_ouis.csv (which
+# is the pure ISP-CPE, derivable catalogue).
+#
+# HOW IT IS USED
+# tools/analyze_wigle.py reads this ledger to (a) recognize these blocks as ALREADY
+# TRIAGED, so they stop resurfacing in the "NEW OUI blocks" list every run, and (b)
+# report gateways on them as an excluded, not-derivable population rather than folding
+# them into the ISP derivability figures. It is a durable "we have seen this block
+# before, and decided it is not ISP CPE" record - not a target list.
+#
+#   oui        first 3 octets, uppercase, colon-separated (e.g. 0C:EF:15)
+#   vendor     retail maker (public IEEE assignee)
+#   reason     why excluded (short slug)
+#   first_seen YYYY-MM-DD the block was first triaged here, or blank if pre-dated
+#
+# Do NOT add passwords, full home BSSID+SSID pairs, GPS, or captures here.
+oui,vendor,reason,first_seen
+# --- TP-Link (retail) --------------------------------------------------------
+28:87:BA,TP-Link,consumer/renamed,
+50:3D:D1,TP-Link,consumer/renamed,
+60:32:B1,TP-Link,consumer/renamed,
+D8:47:32,TP-Link,consumer/renamed,
+EC:75:0C,TP-Link,consumer/renamed,
+A8:6E:84,TP-Link,consumer/renamed,
+70:4F:57,TP-Link,consumer/renamed,
+78:20:51,TP-Link,consumer/renamed,2026-09-15
+5C:A6:E6,TP-Link,consumer/renamed,2026-09-15
+7C:F1:7E,TP-Link,consumer/renamed,2026-09-20
+5C:62:8B,TP-Link,consumer/renamed,2026-09-20
+0C:EF:15,TP-Link,consumer/renamed,2026-09-22
+B0:19:21,TP-Link,consumer/renamed,2026-09-22
+B0:95:75,TP-Link,consumer/renamed,2026-09-22
+AC:15:A2,TP-Link,consumer/renamed,2026-09-22
+0C:80:63,TP-Link,consumer/renamed,2026-09-22
+E4:C3:2A,TP-Link,consumer/renamed,2026-09-22
+68:FF:7B,TP-Link,consumer/renamed,2026-09-22
+# --- Tenda (retail) ----------------------------------------------------------
+50:0F:F5,Tenda,consumer/renamed,2026-09-22
+# --- Xiaomi (retail) ---------------------------------------------------------
+50:D2:F5,Xiaomi,consumer/renamed,2026-09-22
+# --- D-Link (retail) ---------------------------------------------------------
+78:32:1B,D-Link,consumer/renamed,
+# --- Broadcom reference design (white-label APs/repeaters) -------------------
+00:90:4C,Epigram/Broadcom,ref-design/whitelabel,

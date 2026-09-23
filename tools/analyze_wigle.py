@@ -50,6 +50,36 @@ except Exception as exc:                                   # pragma: no cover
     sys.exit(f"error: couldn't import chave_padrao.py (run this from the repo): {exc}")
 
 
+def _load_consumer_ouis():
+    """Load data/consumer_ouis.csv -> {OUI: vendor}: consumer/3rd-party blocks seen
+    on a default CLARO_/NET_ SSID but NOT ISP CPE (renamed routers cloning the SSID).
+    They are deliberately excluded from claro_ouis.csv; the analyzer reads this ledger
+    to (a) recognize them as already-triaged so they stop resurfacing as 'NEW', and
+    (b) report gateways on them as an excluded, not-derivable population. Missing file
+    -> empty dict (behaviour degrades gracefully to the old all-in figures)."""
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "data", "consumer_ouis.csv")
+    consumer = {}
+    try:
+        with open(path, encoding="utf-8") as fh:
+            for row in fh:
+                row = row.strip()
+                if not row or row.startswith("#") or row.lower().startswith("oui,"):
+                    continue
+                cols = [c.strip() for c in row.split(",")]
+                oui = cols[0].upper()
+                if re.match(r"^[0-9A-F]{2}(:[0-9A-F]{2}){2}$", oui) and len(cols) > 1 and cols[1]:
+                    consumer[oui] = cols[1]
+    except OSError:
+        pass
+    return consumer
+
+
+# Consumer/3rd-party OUIs to exclude from the ISP-CPE derivability tallies and to
+# suppress from the "NEW OUI blocks" list. See data/consumer_ouis.csv.
+CONSUMER_OUIS = _load_consumer_ouis()
+
+
 # ---- input parsing ----------------------------------------------------------
 
 _MAC_RE  = re.compile(r"([0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5})")
@@ -193,6 +223,10 @@ def classify(net):
     # A locally-administered BSSID is a secondary radio; look up its vendor by the
     # real (base) OUI. split-OUI is a property of the real block, so test base too.
     vendor = OUI_VENDORS.get(oui) or (OUI_VENDORS.get(base) if local else None)
+    # A consumer/3rd-party block seen on a default SSID is a renamed router cloning
+    # the name, not ISP CPE - flag it so the report excludes it from the derivable
+    # population instead of over-counting it (see data/consumer_ouis.csv).
+    consumer = (oui in CONSUMER_OUIS) or (local and base in CONSUMER_OUIS)
     if full8:
         kind = "full-8 (determined)"
     elif base in SPLIT_OUIS:
@@ -207,6 +241,7 @@ def classify(net):
         "essid": net["essid"], "bssid": net["bssid"], "oui": oui,
         "isp": "NET" if net["essid"].upper().startswith("NET_") else "CLARO",
         "local": local, "base_oui": base, "vendor": vendor, "kind": kind,
+        "consumer": consumer,
         "variant": ssid_variant(net["essid"]),
         "tail_match": (beacon_tail == tail6),
     }
@@ -286,18 +321,21 @@ def render(gateways, stats, non_default_claro, split_hw, telefonica, detail=Fals
     lines = []
     ap = lines.append
 
-    known_ouis = set(OUI_VENDORS)
-    unknown = OrderedDict()           # REAL (universal) OUIs not in the CSV -> count
+    known_ouis = set(OUI_VENDORS) | set(CONSUMER_OUIS)
+    unknown = OrderedDict()           # REAL (universal) OUIs in neither CSV -> count
     variant_counts = Counter()
     oui_counts = Counter()
     isp_counts = Counter()            # CLARO vs NET among default gateways
     oui_local = {}                    # oui -> is it a locally-administered address?
-    single = split = full8 = mismatch = virtual = 0
+    single = split = full8 = mismatch = virtual = consumer = 0
     for g in gateways:
-        variant_counts[g["variant"]] += 1
-        oui_counts[g["oui"]] += 1
-        isp_counts[g["isp"]] += 1
+        oui_counts[g["oui"]] += 1     # histogram shows every block, incl. excluded ones
         oui_local[g["oui"]] = g["local"]
+        if g.get("consumer"):
+            consumer += 1             # 3rd-party clone on a default SSID, NOT ISP CPE
+            continue                  # excluded from every ISP tally below
+        variant_counts[g["variant"]] += 1
+        isp_counts[g["isp"]] += 1
         if g["local"]:
             virtual += 1              # secondary/virtual radio, not a distinct gateway or OUI
         elif g["oui"] not in known_ouis:
@@ -315,7 +353,7 @@ def render(gateways, stats, non_default_claro, split_hw, telefonica, detail=Fals
         return _render_new_rows(unknown, oui_counts)
 
     tele = telefonica_summary(telefonica)
-    total = len(gateways)
+    total = len(gateways) - consumer          # ISP-CPE default gateways only
     ap("=" * 70)
     ap("  WiGLE ISP-gateway analysis")
     ap("=" * 70)
@@ -337,6 +375,9 @@ def render(gateways, stats, non_default_claro, split_hw, telefonica, detail=Fals
     if virtual:
         ap(f"    of which secondary radios   {virtual}   (locally-administered MAC: guest / mesh / IoT)")
         ap(f"    distinct physical-ish ....  {total - virtual}   (primary BSSIDs only)")
+    if consumer:
+        ap(f"  consumer / 3rd-party (EXCLUDED) .. {consumer}   (seen on a default SSID but not")
+        ap(f"                                       ISP CPE - see data/consumer_ouis.csv)")
     ap(f"  CLARO_/NET_-named but non-default  {non_default_claro}   (renamed / changed key)")
     if not total:
         ap("")
@@ -388,14 +429,20 @@ def render(gateways, stats, non_default_claro, split_hw, telefonica, detail=Fals
         if oui_local.get(oui):
             base = base_oui_of(oui)
             v = OUI_VENDORS.get(base)
-            label = (f"{v}  (2nd BSSID of {base})" if v
-                     else f"virtual BSSID of {base}  (not a real OUI - skip)")
+            if v:
+                label = f"{v}  (2nd BSSID of {base})"
+            elif base in CONSUMER_OUIS:
+                label = f"{CONSUMER_OUIS[base]}  (consumer 2nd BSSID of {base} - excluded)"
+            else:
+                label = f"virtual BSSID of {base}  (not a real OUI - skip)"
             ap(f"  {oui}  {n:5d}  {label}")
             continue
         vendor = OUI_VENDORS.get(oui)
         flag = "  SPLIT-OUI" if oui in SPLIT_OUIS else ""
         if vendor:
             ap(f"  {oui}  {n:5d}  {vendor}{flag}")
+        elif oui in CONSUMER_OUIS:
+            ap(f"  {oui}  {n:5d}  {CONSUMER_OUIS[oui]}  (consumer - excluded)")
         else:
             ap(f"  {oui}  {n:5d}  {'(NEW - not in claro_ouis.csv)'}")
 

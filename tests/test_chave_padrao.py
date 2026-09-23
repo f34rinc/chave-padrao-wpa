@@ -163,6 +163,38 @@ class TestAnalyzerNetBreakout(unittest.TestCase):
         self.assertEqual(c["isp"], "NET")
 
 
+class TestAnalyzerConsumerLedger(unittest.TestCase):
+    # 0C:EF:15 is a TP-Link retail block in data/consumer_ouis.csv: a device seen on
+    # a default CLARO_ SSID there is a renamed clone, NOT ISP CPE, so it must be
+    # excluded from the derivable population and never re-flagged as a NEW block.
+    def test_consumer_oui_flagged(self):
+        c = w.classify({"essid": "CLARO_ABCDEF", "bssid": "0cef15abcdef"})
+        self.assertTrue(c["consumer"])
+
+    def test_isp_oui_not_flagged(self):
+        # 74:3A:EF (Kaon) is real ISP CPE in claro_ouis.csv.
+        c = w.classify({"essid": "CLARO_3A9C2D", "bssid": "743aef3a9c2d"})
+        self.assertFalse(c["consumer"])
+
+    def test_ledger_and_catalogue_are_disjoint(self):
+        # A block is either derivable ISP CPE or an excluded consumer clone, never both.
+        self.assertFalse(set(w.CONSUMER_OUIS) & set(k.OUI_VENDORS))
+
+    def _report(self):
+        # One ISP-CPE default gateway (Kaon) + one consumer clone (TP-Link).
+        gws = [w.classify({"essid": "CLARO_3A9C2D", "bssid": "743aef3a9c2d"}),
+               w.classify({"essid": "CLARO_ABCDEF", "bssid": "0cef15abcdef"})]
+        stats = {"files": 1, "rows": 2, "unique": 2, "bad_files": 0}
+        return w.render(gws, stats, 0, [], [])
+
+    def test_consumer_excluded_from_report_and_new(self):
+        rep = self._report()
+        new_section = rep.split("NEW OUI blocks", 1)[-1]
+        self.assertNotIn("0C:EF:15", new_section)          # already triaged, not NEW
+        self.assertIn("consumer / 3rd-party (EXCLUDED)", rep)
+        self.assertIn("default CLARO_/NET_ BSSIDs .. 1", rep)   # only the ISP-CPE one counts
+
+
 class TestAnalyzerTelefonica(unittest.TestCase):
     # Fabricated pairs, each hitting one schemes.py gate (weak/hardened/unknown sets).
     PAIRS = [
