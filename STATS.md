@@ -7,13 +7,13 @@ detect-only). **Counts only** — this file contains no passwords, no BSSIDs, an
 GPS coordinates. Generated with [`tools/analyze_wigle.py`](tools/analyze_wigle.py)
 from local WiGLE database exports (two collectors, one metro area).
 
-_Snapshot: 2026-09-26._
+_Snapshot: 2026-09-27._
 
 ## Dataset
 
 | Metric | Value |
 |---|--:|
-| Unique APs surveyed | 164,650 |
+| Unique APs surveyed | 169,394 |
 | OUI vendor blocks catalogued (ISP-CPE) | 218 |
 | Distinct hardware vendors | 14 |
 
@@ -27,10 +27,10 @@ below (see [Consumer clones](#consumer-clones-excluded)).
 
 | ISP prefix | Default gateways | Key recoverability |
 |---|--:|---|
-| `CLARO_` | 5,296 | derivable off the beacon |
-| `NET_` | 958 | derivable off the beacon (same scheme) |
+| `CLARO_` | 5,407 | derivable off the beacon |
+| `NET_` | 1,001 | derivable off the beacon (same scheme) |
 | `VIVO-` | 22 | detect-only (Telefónica) |
-| `VIVOFIBRA-` | 2,515 | detect-only (Telefónica) |
+| `VIVOFIBRA-` | 2,568 | detect-only (Telefónica) |
 
 ## Default-key gateway population (CLARO_ / NET_)
 
@@ -39,12 +39,12 @@ are counted together for derivability and split out here.
 
 | Metric | Count |
 |---|--:|
-| Default `CLARO_` / `NET_` BSSIDs | 6,254 |
-| &nbsp;&nbsp;— `CLARO_` | 5,296 |
-| &nbsp;&nbsp;— `NET_` | 958 |
-| &nbsp;&nbsp;— primary (physical gateways) | 4,804 |
-| &nbsp;&nbsp;— secondary / virtual (locally-administered) | 1,450 |
-| Renamed `CLARO_` / `NET_` (non-default SSID) | 779 |
+| Default `CLARO_` / `NET_` BSSIDs | 6,408 |
+| &nbsp;&nbsp;— `CLARO_` | 5,407 |
+| &nbsp;&nbsp;— `NET_` | 1,001 |
+| &nbsp;&nbsp;— primary (physical gateways) | 4,929 |
+| &nbsp;&nbsp;— secondary / virtual (locally-administered) | 1,479 |
+| Renamed `CLARO_` / `NET_` (non-default SSID) | 800 |
 
 A further **28 BSSIDs** carried a default-form `CLARO_`/`NET_` SSID but sit on
 **consumer/3rd-party OUIs** (a renamed router or added AP cloning the name, not ISP
@@ -59,14 +59,14 @@ population, so the figure is honest rather than optimistic.)
 
 | Class | Count | Share |
 |---|--:|--:|
-| single-OUI — 1 guess off the beacon | 6,243 | 99.8% |
-| full-8 in SSID — key fully determined | 10 | 0.2% |
+| single-OUI — 1 guess off the beacon | 6,394 | 99.8% |
+| full-8 in SSID — key fully determined | 13 | 0.2% |
 | split-OUI — 256-guess vs a handshake | 1 | 0.0% |
-| **Derivable off the beacon** | **6,253** | **99.98%** |
+| **Derivable off the beacon** | **6,407** | **99.98%** |
 
-5,969 of the single-OUI gateways had a BSSID tail that differs from the SSID tail
+6,116 of the single-OUI gateways had a BSSID tail that differs from the SSID tail
 (the benign same-OUI "Compal case") — still a single guess, because the leading
-byte is BSSID octet 3. 1,450 were secondary/virtual radios: the locally-administered
+byte is BSSID octet 3. 1,479 were secondary/virtual radios: the locally-administered
 bit flips octet 1, never octet 3, so the leading byte still reads off the beacon.
 
 The lone exception is a single **split-OUI** unit seen on a default SSID —
@@ -83,11 +83,11 @@ directly off the beacon.
 
 | Variant | Count |
 |---|--:|
-| no-band | 2,540 |
-| banded 5 GHz | 1,385 |
-| banded 2.4 GHz | 1,166 |
-| mesh backhaul (`-5G-BH`) | 1,022 |
-| IoT (`-IoT`) | 141 |
+| no-band | 2,624 |
+| banded 5 GHz | 1,410 |
+| banded 2.4 GHz | 1,187 |
+| mesh backhaul (`-5G-BH`) | 1,043 |
+| IoT (`-IoT`) | 144 |
 
 ## Split-OUI hardware (ARRIS/CommScope)
 
@@ -142,17 +142,17 @@ confidently-wrong guess.
 
 | Metric | Count |
 |---|--:|
-| Detected (default + renamed) | 2,714 |
-| &nbsp;&nbsp;— `VIVO-` | 74 |
-| &nbsp;&nbsp;— `VIVOFIBRA-` | 2,640 |
-| Default-form SSIDs | 2,537 |
+| Detected (default + renamed) | 2,772 |
+| &nbsp;&nbsp;— `VIVO-` | 76 |
+| &nbsp;&nbsp;— `VIVOFIBRA-` | 2,696 |
+| Default-form SSIDs | 2,590 |
 | &nbsp;&nbsp;— weak MitraStar OUI | 15 |
-| &nbsp;&nbsp;— hardened ODM (random factory key) | 262 |
-| &nbsp;&nbsp;— OUI not yet researched | 2,260 |
+| &nbsp;&nbsp;— hardened ODM (random factory key) | 269 |
+| &nbsp;&nbsp;— OUI not yet researched | 2,306 |
 | **Derivable** (weak OUI + base-MAC capture) | **10** |
-| Detect-only (identified, no key off the beacon) | 2,527 |
+| Detect-only (identified, no key off the beacon) | 2,580 |
 
-The ~89% "not yet researched" share (2,260 of 2,537) reflects that VIVOFIBRA's ODM
+The ~89% "not yet researched" share (2,306 of 2,590) reflects that VIVOFIBRA's ODM
 mix is largely uncatalogued — each label/handshake that confirms a weak OUI moves a
 whole block from detect-only into derivable. No VIVO OUI research is folded into this
 survey; the gate comes from `schemes.py`'s existing weak/hardened sets.
