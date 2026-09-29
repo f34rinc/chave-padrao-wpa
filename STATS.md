@@ -7,14 +7,14 @@ detect-only). **Counts only** — this file contains no passwords, no BSSIDs, an
 GPS coordinates. Generated with [`tools/analyze_wigle.py`](tools/analyze_wigle.py)
 from local WiGLE database exports (two collectors, one metro area).
 
-_Snapshot: 2026-09-27._
+_Snapshot: 2026-09-29._
 
 ## Dataset
 
 | Metric | Value |
 |---|--:|
-| Unique APs surveyed | 169,394 |
-| OUI vendor blocks catalogued (ISP-CPE) | 218 |
+| Unique APs surveyed | 182,871 |
+| OUI vendor blocks catalogued (ISP-CPE) | 221 |
 | Distinct hardware vendors | 14 |
 
 The OUI catalogue is a **pure ISP-CPE** list. Consumer/3rd-party blocks that were
@@ -27,10 +27,10 @@ below (see [Consumer clones](#consumer-clones-excluded)).
 
 | ISP prefix | Default gateways | Key recoverability |
 |---|--:|---|
-| `CLARO_` | 5,407 | derivable off the beacon |
-| `NET_` | 1,001 | derivable off the beacon (same scheme) |
+| `CLARO_` | 5,805 | derivable off the beacon |
+| `NET_` | 1,060 | derivable off the beacon (same scheme) |
 | `VIVO-` | 22 | detect-only (Telefónica) |
-| `VIVOFIBRA-` | 2,568 | detect-only (Telefónica) |
+| `VIVOFIBRA-` | 2,908 | detect-only (Telefónica) |
 
 ## Default-key gateway population (CLARO_ / NET_)
 
@@ -39,14 +39,14 @@ are counted together for derivability and split out here.
 
 | Metric | Count |
 |---|--:|
-| Default `CLARO_` / `NET_` BSSIDs | 6,408 |
-| &nbsp;&nbsp;— `CLARO_` | 5,407 |
-| &nbsp;&nbsp;— `NET_` | 1,001 |
-| &nbsp;&nbsp;— primary (physical gateways) | 4,929 |
-| &nbsp;&nbsp;— secondary / virtual (locally-administered) | 1,479 |
-| Renamed `CLARO_` / `NET_` (non-default SSID) | 800 |
+| Default `CLARO_` / `NET_` BSSIDs | 6,865 |
+| &nbsp;&nbsp;— `CLARO_` | 5,805 |
+| &nbsp;&nbsp;— `NET_` | 1,060 |
+| &nbsp;&nbsp;— primary (physical gateways) | 5,263 |
+| &nbsp;&nbsp;— secondary / virtual (locally-administered) | 1,602 |
+| Renamed `CLARO_` / `NET_` (non-default SSID) | 864 |
 
-A further **28 BSSIDs** carried a default-form `CLARO_`/`NET_` SSID but sit on
+A further **30 BSSIDs** carried a default-form `CLARO_`/`NET_` SSID but sit on
 **consumer/3rd-party OUIs** (a renamed router or added AP cloning the name, not ISP
 CPE). They are excluded from the counts above and from derivability, and tracked in
 [`data/consumer_ouis.csv`](data/consumer_ouis.csv).
@@ -59,14 +59,14 @@ population, so the figure is honest rather than optimistic.)
 
 | Class | Count | Share |
 |---|--:|--:|
-| single-OUI — 1 guess off the beacon | 6,394 | 99.8% |
-| full-8 in SSID — key fully determined | 13 | 0.2% |
+| single-OUI — 1 guess off the beacon | 6,849 | 99.8% |
+| full-8 in SSID — key fully determined | 15 | 0.2% |
 | split-OUI — 256-guess vs a handshake | 1 | 0.0% |
-| **Derivable off the beacon** | **6,407** | **99.98%** |
+| **Derivable off the beacon** | **6,864** | **99.98%** |
 
-6,116 of the single-OUI gateways had a BSSID tail that differs from the SSID tail
+6,554 of the single-OUI gateways had a BSSID tail that differs from the SSID tail
 (the benign same-OUI "Compal case") — still a single guess, because the leading
-byte is BSSID octet 3. 1,479 were secondary/virtual radios: the locally-administered
+byte is BSSID octet 3. 1,602 were secondary/virtual radios: the locally-administered
 bit flips octet 1, never octet 3, so the leading byte still reads off the beacon.
 
 The lone exception is a single **split-OUI** unit seen on a default SSID —
@@ -83,47 +83,47 @@ directly off the beacon.
 
 | Variant | Count |
 |---|--:|
-| no-band | 2,624 |
-| banded 5 GHz | 1,410 |
-| banded 2.4 GHz | 1,187 |
-| mesh backhaul (`-5G-BH`) | 1,043 |
-| IoT (`-IoT`) | 144 |
+| no-band | 2,792 |
+| banded 5 GHz | 1,500 |
+| banded 2.4 GHz | 1,283 |
+| mesh backhaul (`-5G-BH`) | 1,132 |
+| IoT (`-IoT`) | 158 |
 
 ## Split-OUI hardware (ARRIS/CommScope)
 
-13 BSSIDs were seen on the catalogued `C8:52:61` router block — 1 on a default
-`CLARO_` SSID and 12 renamed. Because only that one block is catalogued as split,
+14 BSSIDs were seen on the catalogued `C8:52:61` router block — 1 on a default
+`CLARO_` SSID and 13 renamed. Because only that one block is catalogued as split,
 and split cannot be seen from a beacon, this is a floor, not a full count.
 
 ## Consumer clones excluded
 
-28 BSSIDs broadcast a default-form `CLARO_`/`NET_` SSID from a **consumer/3rd-party
+30 BSSIDs broadcast a default-form `CLARO_`/`NET_` SSID from a **consumer/3rd-party
 OUI** — almost certainly renamed routers or added APs cloning the SSID. A non-Claro
 device does not run the MAC-derived default-key scheme, so its key is **not
 derivable**; counting it as an ISP gateway would over-state the numbers. These blocks
-(TP-Link, Tenda, Xiaomi, D-Link, a Broadcom reference design) are catalogued
+(TP-Link, Tenda, Xiaomi, D-Link, NETGEAR, a Broadcom reference design, plus one unregistered block) are catalogued
 separately in [`data/consumer_ouis.csv`](data/consumer_ouis.csv) as a durable
 "already-triaged, not ISP CPE" record, so they are excluded from the counts above and
 never resurface as newly-seen blocks. This replaces the earlier ~0.3% estimate with a
 measured figure.
 
-## OUI vendor table (218 blocks)
+## OUI vendor table (221 blocks)
 
 One vendor holds many OUI blocks: each block covers ~16.7M addresses, so
 high-volume makers exhaust blocks and register more, and acquisitions carry legacy
-blocks (Vantiva is the renamed Technicolor; CommScope acquired ARRIS). So 218
+blocks (Vantiva is the renamed Technicolor; CommScope acquired ARRIS). So 221
 blocks map to only 14 actual companies.
 
 | Vendor | Blocks |
 |---|--:|
-| Sagemcom | 63 |
+| Sagemcom | 64 |
 | Vantiva/Technicolor | 46 |
 | ZTE | 40 |
-| Huawei | 27 |
+| Huawei | 28 |
 | Arris/CommScope | 15 |
 | Kaon | 7 |
 | Humax | 6 |
-| Intelbras | 5 |
+| Intelbras | 6 |
 | Tellescom | 3 |
 | Compal | 2 |
 | Hitron | 1 |
@@ -142,17 +142,17 @@ confidently-wrong guess.
 
 | Metric | Count |
 |---|--:|
-| Detected (default + renamed) | 2,772 |
-| &nbsp;&nbsp;— `VIVO-` | 76 |
-| &nbsp;&nbsp;— `VIVOFIBRA-` | 2,696 |
-| Default-form SSIDs | 2,590 |
-| &nbsp;&nbsp;— weak MitraStar OUI | 15 |
-| &nbsp;&nbsp;— hardened ODM (random factory key) | 269 |
-| &nbsp;&nbsp;— OUI not yet researched | 2,306 |
+| Detected (default + renamed) | 3,134 |
+| &nbsp;&nbsp;— `VIVO-` | 81 |
+| &nbsp;&nbsp;— `VIVOFIBRA-` | 3,053 |
+| Default-form SSIDs | 2,930 |
+| &nbsp;&nbsp;— weak MitraStar OUI | 16 |
+| &nbsp;&nbsp;— hardened ODM (random factory key) | 317 |
+| &nbsp;&nbsp;— OUI not yet researched | 2,597 |
 | **Derivable** (weak OUI + base-MAC capture) | **10** |
-| Detect-only (identified, no key off the beacon) | 2,580 |
+| Detect-only (identified, no key off the beacon) | 2,920 |
 
-The ~89% "not yet researched" share (2,306 of 2,590) reflects that VIVOFIBRA's ODM
+The ~89% "not yet researched" share (2,597 of 2,930) reflects that VIVOFIBRA's ODM
 mix is largely uncatalogued — each label/handshake that confirms a weak OUI moves a
 whole block from detect-only into derivable. No VIVO OUI research is folded into this
 survey; the gate comes from `schemes.py`'s existing weak/hardened sets.

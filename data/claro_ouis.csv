@@ -266,6 +266,10 @@ F8:AB:05,Sagemcom,
 # 2026-09-23 new-area warwalk - 2 new OUIs, IEEE-attributed (both Huawei CPE)
 28:68:D2,Huawei,
 F0:9B:B8,Huawei,
+# 2026-09-29 new-area (Jiu Jitsu district) - 3 new ISP-CPE OUIs, IEEE-attributed
+E8:AD:A6,Sagemcom,
+48:2C:D0,Huawei,
+80:8F:E8,Intelbras,
 
 # --- Consumer / 3rd-party blocks moved out (data quality) --------------------
 # Blocks once listed here that proved to be CONSUMER / 3rd-party brands (a device

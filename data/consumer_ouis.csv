@@ -52,3 +52,7 @@ F4:F2:6D,TP-Link,consumer/renamed,2026-09-26
 78:32:1B,D-Link,consumer/renamed,
 # --- Broadcom reference design (white-label APs/repeaters) -------------------
 00:90:4C,Epigram/Broadcom,ref-design/whitelabel,
+# --- NETGEAR (retail) --------------------------------------------------------
+04:A1:51,NETGEAR,consumer/renamed,2026-09-29
+# --- Unregistered / unattributed (not in the IEEE registry) ------------------
+A0:E1:6D,unregistered,unattributed-not-in-IEEE,2026-09-29
