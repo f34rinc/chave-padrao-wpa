@@ -270,6 +270,8 @@ F0:9B:B8,Huawei,
 E8:AD:A6,Sagemcom,
 48:2C:D0,Huawei,
 80:8F:E8,Intelbras,
+# 2026-09-30 small run - 1 new ISP-CPE OUI, IEEE-attributed
+30:42:40,ZTE,
 
 # --- Consumer / 3rd-party blocks moved out (data quality) --------------------
 # Blocks once listed here that proved to be CONSUMER / 3rd-party brands (a device
