@@ -272,6 +272,10 @@ E8:AD:A6,Sagemcom,
 80:8F:E8,Intelbras,
 # 2026-09-30 small run - 1 new ISP-CPE OUI, IEEE-attributed
 30:42:40,ZTE,
+# 2026-10-09 survey - 3 new ISP-CPE OUIs, IEEE-attributed
+1C:9E:CC,Vantiva/Technicolor,
+FC:2D:5E,ZTE,
+D4:2C:0F,Arris/CommScope,
 
 # --- Consumer / 3rd-party blocks moved out (data quality) --------------------
 # Blocks once listed here that proved to be CONSUMER / 3rd-party brands (a device

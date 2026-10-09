@@ -14,7 +14,7 @@ _Snapshot: 2026-10-09._
 | Metric | Value |
 |---|--:|
 | Unique APs surveyed | 203,757 |
-| OUI vendor blocks catalogued (ISP-CPE) | 222 |
+| OUI vendor blocks catalogued (ISP-CPE) | 225 |
 | Distinct hardware vendors | 14 |
 
 The OUI catalogue is a **pure ISP-CPE** list. Consumer/3rd-party blocks that were
@@ -27,7 +27,7 @@ below (see [Consumer clones](#consumer-clones-excluded)).
 
 | ISP prefix | Default gateways | Key recoverability |
 |---|--:|---|
-| `CLARO_` | 6,534 | derivable off the beacon |
+| `CLARO_` | 6,531 | derivable off the beacon |
 | `NET_` | 1,219 | derivable off the beacon (same scheme) |
 | `VIVO-` | 22 | detect-only (Telefónica) |
 | `VIVOFIBRA-` | 3,125 | detect-only (Telefónica) |
@@ -39,14 +39,14 @@ are counted together for derivability and split out here.
 
 | Metric | Count |
 |---|--:|
-| Default `CLARO_` / `NET_` BSSIDs | 7,753 |
-| &nbsp;&nbsp;— `CLARO_` | 6,534 |
+| Default `CLARO_` / `NET_` BSSIDs | 7,750 |
+| &nbsp;&nbsp;— `CLARO_` | 6,531 |
 | &nbsp;&nbsp;— `NET_` | 1,219 |
-| &nbsp;&nbsp;— primary (physical gateways) | 5,938 |
+| &nbsp;&nbsp;— primary (physical gateways) | 5,935 |
 | &nbsp;&nbsp;— secondary / virtual (locally-administered) | 1,815 |
 | Renamed `CLARO_` / `NET_` (non-default SSID) | 999 |
 
-A further **33 BSSIDs** carried a default-form `CLARO_`/`NET_` SSID but sit on
+A further **36 BSSIDs** carried a default-form `CLARO_`/`NET_` SSID but sit on
 **consumer/3rd-party OUIs** (a renamed router or added AP cloning the name, not ISP
 CPE). They are excluded from the counts above and from derivability, and tracked in
 [`data/consumer_ouis.csv`](data/consumer_ouis.csv).
@@ -59,12 +59,12 @@ population, so the figure is honest rather than optimistic.)
 
 | Class | Count | Share |
 |---|--:|--:|
-| single-OUI — 1 guess off the beacon | 7,735 | 99.8% |
+| single-OUI — 1 guess off the beacon | 7,732 | 99.8% |
 | full-8 in SSID — key fully determined | 17 | 0.2% |
 | split-OUI — 256-guess vs a handshake | 1 | 0.0% |
-| **Derivable off the beacon** | **7,752** | **99.99%** |
+| **Derivable off the beacon** | **7,749** | **99.99%** |
 
-7,397 of the single-OUI gateways had a BSSID tail that differs from the SSID tail
+7,394 of the single-OUI gateways had a BSSID tail that differs from the SSID tail
 (the benign same-OUI "Compal case") — still a single guess, because the leading
 byte is BSSID octet 3. 1,815 were secondary/virtual radios: the locally-administered
 bit flips octet 1, never octet 3, so the leading byte still reads off the beacon.
@@ -85,7 +85,7 @@ directly off the beacon.
 |---|--:|
 | no-band | 3,197 |
 | banded 5 GHz | 1,637 |
-| banded 2.4 GHz | 1,464 |
+| banded 2.4 GHz | 1,461 |
 | mesh backhaul (`-5G-BH`) | 1,266 |
 | IoT (`-IoT`) | 189 |
 
@@ -97,7 +97,7 @@ and split cannot be seen from a beacon, this is a floor, not a full count.
 
 ## Consumer clones excluded
 
-33 BSSIDs broadcast a default-form `CLARO_`/`NET_` SSID from a **consumer/3rd-party
+36 BSSIDs broadcast a default-form `CLARO_`/`NET_` SSID from a **consumer/3rd-party
 OUI** — almost certainly renamed routers or added APs cloning the SSID. A non-Claro
 device does not run the MAC-derived default-key scheme, so its key is **not
 derivable**; counting it as an ISP gateway would over-state the numbers. These blocks
@@ -107,20 +107,23 @@ separately in [`data/consumer_ouis.csv`](data/consumer_ouis.csv) as a durable
 never resurface as newly-seen blocks. This replaces the earlier ~0.3% estimate with a
 measured figure.
 
-## OUI vendor table (222 blocks)
+## OUI vendor table (225 blocks)
 
 One vendor holds many OUI blocks: each block covers ~16.7M addresses, so
 high-volume makers exhaust blocks and register more, and acquisitions carry legacy
 blocks (Vantiva is the renamed Technicolor; CommScope acquired ARRIS). So 222
-blocks map to only 14 actual companies.
+blocks map to only 14 actual companies. The 2026-10-09 survey added three
+IEEE-verified ISP-CPE blocks to existing families (`1C:9E:CC` Vantiva, `FC:2D:5E`
+ZTE, `D4:2C:0F` Arris/CommScope), so the block total rose 222 → 225 with no new
+vendor.
 
 | Vendor | Blocks |
 |---|--:|
 | Sagemcom | 64 |
-| Vantiva/Technicolor | 46 |
-| ZTE | 41 |
+| Vantiva/Technicolor | 47 |
+| ZTE | 42 |
 | Huawei | 28 |
-| Arris/CommScope | 15 |
+| Arris/CommScope | 16 |
 | Kaon | 7 |
 | Humax | 6 |
 | Intelbras | 6 |
