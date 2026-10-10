@@ -276,6 +276,9 @@ E8:AD:A6,Sagemcom,
 1C:9E:CC,Vantiva/Technicolor,
 FC:2D:5E,ZTE,
 D4:2C:0F,Arris/CommScope,
+# 2026-10-10 survey - 2 new ISP-CPE OUIs, IEEE-attributed (Huawei)
+80:E1:BF,Huawei,
+20:AB:48,Huawei,
 
 # --- Consumer / 3rd-party blocks moved out (data quality) --------------------
 # Blocks once listed here that proved to be CONSUMER / 3rd-party brands (a device
