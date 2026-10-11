@@ -279,6 +279,12 @@ D4:2C:0F,Arris/CommScope,
 # 2026-10-10 survey - 2 new ISP-CPE OUIs, IEEE-attributed (Huawei)
 80:E1:BF,Huawei,
 20:AB:48,Huawei,
+# 2026-10-11 survey - 5 new ISP-CPE OUIs, IEEE-attributed
+38:17:B1,Sagemcom,
+08:7B:12,Sagemcom,
+E8:13:6E,Huawei,
+B0:EC:DD,Huawei,
+C4:92:D9,ZTE,
 
 # --- Consumer / 3rd-party blocks moved out (data quality) --------------------
 # Blocks once listed here that proved to be CONSUMER / 3rd-party brands (a device
