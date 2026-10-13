@@ -285,6 +285,8 @@ D4:2C:0F,Arris/CommScope,
 E8:13:6E,Huawei,
 B0:EC:DD,Huawei,
 C4:92:D9,ZTE,
+# 2026-10-13 survey - 1 new ISP-CPE OUI, IEEE-attributed
+80:29:94,Vantiva/Technicolor,
 
 # --- Consumer / 3rd-party blocks moved out (data quality) --------------------
 # Blocks once listed here that proved to be CONSUMER / 3rd-party brands (a device
