@@ -287,6 +287,8 @@ B0:EC:DD,Huawei,
 C4:92:D9,ZTE,
 # 2026-10-13 survey - 1 new ISP-CPE OUI, IEEE-attributed
 80:29:94,Vantiva/Technicolor,
+# 2026-10-15 survey - 1 new ISP-CPE OUI, IEEE-attributed (WNC = Wistron NeWeb ODM/CPE, matches E0:37:BF)
+44:E4:EE,WNC,
 
 # --- Consumer / 3rd-party blocks moved out (data quality) --------------------
 # Blocks once listed here that proved to be CONSUMER / 3rd-party brands (a device
