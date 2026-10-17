@@ -52,6 +52,9 @@ D8:07:B6,TP-Link,consumer/renamed,2026-10-09
 6C:4C:BC,TP-Link,consumer/renamed,2026-10-11
 84:D8:1B,TP-Link,consumer/renamed,2026-10-13
 3C:64:CF,TP-Link,consumer/renamed,2026-10-16
+40:AE:30,TP-Link,consumer/renamed,2026-10-17
+C0:C9:E3,TP-Link,consumer/renamed,2026-10-17
+98:DA:C4,TP-Link,consumer/renamed,2026-10-17
 # --- Tenda (retail) ----------------------------------------------------------
 50:0F:F5,Tenda,consumer/renamed,2026-09-22
 # --- Xiaomi (retail) ---------------------------------------------------------
@@ -59,6 +62,7 @@ D8:07:B6,TP-Link,consumer/renamed,2026-10-09
 9C:9D:7E,Xiaomi,consumer/renamed,2026-10-13
 # --- D-Link (retail) ---------------------------------------------------------
 78:32:1B,D-Link,consumer/renamed,
+34:0A:33,D-Link,consumer/renamed,2026-10-17
 # --- Broadcom reference design (white-label APs/repeaters) -------------------
 00:90:4C,Epigram/Broadcom,ref-design/whitelabel,
 # --- NETGEAR (retail) --------------------------------------------------------

@@ -292,6 +292,10 @@ C4:92:D9,ZTE,
 # 2026-10-16 survey - 2 new ISP-CPE OUIs, IEEE-attributed
 98:00:6A,ZTE,
 B0:C2:87,Vantiva/Technicolor,
+# 2026-10-17 survey - 3 new ISP-CPE OUIs, IEEE-attributed
+30:24:78,Sagemcom,
+3C:B7:4B,Vantiva/Technicolor,
+C0:F6:C2,Huawei,
 
 # --- Consumer / 3rd-party blocks moved out (data quality) --------------------
 # Blocks once listed here that proved to be CONSUMER / 3rd-party brands (a device
