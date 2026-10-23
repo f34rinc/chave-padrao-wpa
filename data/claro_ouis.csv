@@ -296,6 +296,8 @@ B0:C2:87,Vantiva/Technicolor,
 30:24:78,Sagemcom,
 3C:B7:4B,Vantiva/Technicolor,
 C0:F6:C2,Huawei,
+90:3F:EA,Huawei,
+80:85:44,Intelbras,
 
 # --- Consumer / 3rd-party blocks moved out (data quality) --------------------
 # Blocks once listed here that proved to be CONSUMER / 3rd-party brands (a device
