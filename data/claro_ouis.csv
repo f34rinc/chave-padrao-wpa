@@ -231,6 +231,7 @@ EC:A1:D1,Huawei,
 E8:20:E2,Humax,
 94:2C:B3,Humax,
 90:F3:05,Humax,
+4C:D0:8A,Humax,
 10:62:D0,Vantiva/Technicolor,
 54:A6:5C,Vantiva/Technicolor,
 90:58:51,Vantiva/Technicolor,
@@ -279,6 +280,7 @@ E8:AD:A6,Sagemcom,
 1C:9E:CC,Vantiva/Technicolor,
 FC:2D:5E,ZTE,
 D4:2C:0F,Arris/CommScope,
+40:4C:77,Arris/CommScope,
 # 2026-10-10 survey - 2 new ISP-CPE OUIs, IEEE-attributed (Huawei)
 80:E1:BF,Huawei,
 20:AB:48,Huawei,
@@ -294,12 +296,15 @@ C4:92:D9,ZTE,
 44:E4:EE,WNC,
 # 2026-10-16 survey - 2 new ISP-CPE OUIs, IEEE-attributed
 98:00:6A,ZTE,
+BC:BD:84,ZTE,
 B0:C2:87,Vantiva/Technicolor,
 # 2026-10-17 survey - 3 new ISP-CPE OUIs, IEEE-attributed
 30:24:78,Sagemcom,
 3C:B7:4B,Vantiva/Technicolor,
+08:95:2A,Vantiva/Technicolor,
 C0:F6:C2,Huawei,
 90:3F:EA,Huawei,
+98:3F:60,Huawei,
 80:85:44,Intelbras,
 
 # --- Consumer / 3rd-party blocks moved out (data quality) --------------------
@@ -311,3 +316,4 @@ C0:F6:C2,Huawei,
 # derivability figures, so they no longer over-count as the old ~0.3% false positives.
 # Ambiguous (left here, unflagged - can be ISP CPE or consumer): Intelbras,
 # SEI Robotics, Tellescom.
+A8:FF:CE,Unregistered,
